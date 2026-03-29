@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Journal d'auto-observation</title>
+    <meta name="description" content="Journal d'auto-observation des comportements alimentaires">
+    <meta name="theme-color" content="#6B8F71">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Mon Journal">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📓</text></svg>">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- ========== LOCK SCREEN ========== -->
+    <div id="lock-screen" class="lock-screen hidden">
+        <div class="lock-content">
+            <div class="lock-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+            </div>
+            <h2 id="lock-title">Entrez votre code</h2>
+            <p id="lock-subtitle" class="lock-subtitle"></p>
+            <div class="pin-dots" id="pin-dots">
+                <span class="pin-dot"></span>
+                <span class="pin-dot"></span>
+                <span class="pin-dot"></span>
+                <span class="pin-dot"></span>
+            </div>
+            <div class="pin-error hidden" id="pin-error">Code incorrect</div>
+            <button class="biometric-btn hidden" id="biometric-btn" onclick="App.tryBiometric()">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2z"></path><path d="M15 9a3 3 0 0 0-6 0v2"></path><circle cx="9" cy="9.5" r="0.5" fill="currentColor" stroke="none"></circle><circle cx="15" cy="9.5" r="0.5" fill="currentColor" stroke="none"></circle><path d="M9 15c1 1.5 5 1.5 6 0"></path></svg>
+                <span id="biometric-label">Face ID</span>
+            </button>
+            <div class="pin-pad">
+                <button class="pin-key" onclick="App.pinInput(1)">1</button>
+                <button class="pin-key" onclick="App.pinInput(2)">2</button>
+                <button class="pin-key" onclick="App.pinInput(3)">3</button>
+                <button class="pin-key" onclick="App.pinInput(4)">4</button>
+                <button class="pin-key" onclick="App.pinInput(5)">5</button>
+                <button class="pin-key" onclick="App.pinInput(6)">6</button>
+                <button class="pin-key" onclick="App.pinInput(7)">7</button>
+                <button class="pin-key" onclick="App.pinInput(8)">8</button>
+                <button class="pin-key" onclick="App.pinInput(9)">9</button>
+                <button class="pin-key pin-key-empty"></button>
+                <button class="pin-key" onclick="App.pinInput(0)">0</button>
+                <button class="pin-key pin-key-delete" onclick="App.pinDelete()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+                </button>
+            </div>
+            <button class="lock-remove-btn hidden" id="lock-remove-btn" onclick="App.removePin()">Désactiver le code</button>
+        </div>
+    </div>
+
+    <div id="app">
+
+        <!-- ========== HOME SCREEN ========== -->
+        <div id="screen-home" class="screen active">
+            <header class="screen-header home-header">
+                <div>
+                    <h1>Mon Journal</h1>
+                    <p class="subtitle" id="today-date"></p>
+                </div>
+                <button class="btn-lock" onclick="App.lockApp()" id="btn-lock" title="Verrouiller">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </button>
+            </header>
+
+            <div class="screen-content">
+                <div id="quote-card" class="card quote-card">
+                    <p class="quote-text">&laquo; Commence là où tu es, utilise ce que tu as, fais ce que tu peux &raquo;</p>
+                    <p class="quote-author">Arthur Ashe</p>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="App.quickNormalEntry()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Repas normal
+                    </button>
+                    <button class="quick-btn" onclick="App.duplicateLastEntry()">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Reprendre le dernier
+                    </button>
+                </div>
+
+                <div class="section-label">
+                    <span>Entrées du jour</span>
+                    <span id="today-count" class="badge">0</span>
+                </div>
+
+                <div id="today-entries" class="entries-list">
+                    <div class="empty-state" id="empty-today">
+                        <div class="empty-icon">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                            </svg>
+                        </div>
+                        <p>Aucune entrée aujourd'hui</p>
+                        <p class="empty-hint">Appuyez sur + pour ajouter une observation</p>
+                    </div>
+                </div>
+            </div>
+
+            <button id="btn-add" class="fab" aria-label="Nouvelle entrée" onclick="App.showForm()">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+
+        <!-- ========== FORM SCREEN ========== -->
+        <div id="screen-form" class="screen">
+            <header class="screen-header compact">
+                <button class="btn-back" onclick="App.goBack()" aria-label="Retour">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <h2 id="form-title">Nouvelle entrée</h2>
+                <button class="btn-delete hidden" id="btn-delete-entry" onclick="App.deleteEntry()" aria-label="Supprimer">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                </button>
+            </header>
+
+            <div class="screen-content form-content">
+                <form id="entry-form" onsubmit="return false;">
+
+                    <!-- COMPACT: Le Moment (always visible) -->
+                    <section class="form-section">
+                        <div class="field-row">
+                            <div class="field-group flex-1">
+                                <input type="date" id="entry-date" required>
+                            </div>
+                            <div class="field-group flex-1">
+                                <input type="time" id="entry-time" required>
+                            </div>
+                        </div>
+
+                        <div class="chips compact-chips" id="meal-chips">
+                            <button type="button" class="chip chip-sm" data-value="petit-dejeuner">Petit-déj</button>
+                            <button type="button" class="chip chip-sm" data-value="dejeuner">Déjeuner</button>
+                            <button type="button" class="chip chip-sm" data-value="gouter">Goûter</button>
+                            <button type="button" class="chip chip-sm" data-value="diner">Dîner</button>
+                            <button type="button" class="chip chip-sm" data-value="grignotage">Grignotage</button>
+                            <button type="button" class="chip chip-sm" data-value="autre">Autre</button>
+                        </div>
+
+                        <div class="field-group">
+                            <div class="input-with-mic">
+                                <textarea id="entry-behavior" rows="2" placeholder="Qu'avez-vous mangé ? Comment ?"></textarea>
+                                <button type="button" class="btn-mic" onclick="App.startSpeech('entry-behavior')" aria-label="Dicter">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="field-group">
+                            <input type="text" id="entry-duration" placeholder="Durée (ex: 15 min)">
+                        </div>
+                    </section>
+
+                    <!-- COMPACT: Émotions rapides (always visible) -->
+                    <section class="form-section">
+                        <label class="section-label-inline">Comment vous sentiez-vous ?</label>
+                        <div class="chips emotion-chips compact-chips" id="quick-emotions">
+                            <button type="button" class="chip chip-sm" data-emotion="joie">Joie</button>
+                            <button type="button" class="chip chip-sm" data-emotion="tristesse">Tristesse</button>
+                            <button type="button" class="chip chip-sm" data-emotion="peur">Peur</button>
+                            <button type="button" class="chip chip-sm" data-emotion="colere">Colère</button>
+                            <button type="button" class="chip chip-sm" data-emotion="degout">Dégoût</button>
+                            <button type="button" class="chip chip-sm" data-emotion="culpabilite">Culpabilité</button>
+                            <button type="button" class="chip chip-sm" data-emotion="honte">Honte</button>
+                            <button type="button" class="chip chip-sm" data-emotion="stress">Stress</button>
+                            <button type="button" class="chip chip-sm" data-emotion="ennui">Ennui</button>
+                            <button type="button" class="chip chip-sm" data-emotion="frustration">Frustration</button>
+                            <button type="button" class="chip chip-sm" data-emotion="satisfaction">Satisfaction</button>
+                        </div>
+                    </section>
+
+                    <!-- COMPACT: Notes rapides (always visible) -->
+                    <section class="form-section">
+                        <div class="input-with-mic">
+                            <textarea id="quick-notes" rows="2" placeholder="Notes, pensées, observations..."></textarea>
+                            <button type="button" class="btn-mic" onclick="App.startSpeech('quick-notes')" aria-label="Dicter">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                            </button>
+                        </div>
+                    </section>
+
+                    <!-- COMPACT: Pulsions sucrées -->
+                    <section class="form-section">
+                        <label class="section-label-inline">Pulsions sucrées</label>
+                        <div class="toggle-row">
+                            <span class="toggle-label">Envie soudaine ?</span>
+                            <div class="toggle-chips" id="craving-toggle">
+                                <button type="button" class="chip chip-xs" data-val="yes" onclick="App.setCraving(true)">Oui</button>
+                                <button type="button" class="chip chip-xs" data-val="no" onclick="App.setCraving(false)">Non</button>
+                            </div>
+                        </div>
+                        <div id="craving-details" class="craving-details hidden">
+                            <div class="toggle-row">
+                                <span class="toggle-label">Assouvie ?</span>
+                                <div class="toggle-chips" id="craving-satisfied-toggle">
+                                    <button type="button" class="chip chip-xs" data-val="yes" onclick="App.setCravingSatisfied(true)">Oui</button>
+                                    <button type="button" class="chip chip-xs" data-val="no" onclick="App.setCravingSatisfied(false)">Non</button>
+                                </div>
+                            </div>
+                            <div id="craving-price-row" class="craving-price-row hidden">
+                                <div class="input-with-mic" style="margin-bottom:8px">
+                                    <input type="text" id="pastry-desc" placeholder="Quelle pâtisserie ?">
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('pastry-desc')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                                <div class="price-input-group">
+                                    <input type="number" id="pastry-price" step="0.50" min="0" placeholder="0.00" inputmode="decimal">
+                                    <span class="price-currency">€</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- EXPANDABLE: Avant le repas -->
+                    <section class="form-section collapsible">
+                        <h3 class="section-title toggle-section" onclick="App.toggleSection(this)">
+                            <svg class="toggle-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            Avant le repas
+                            <span class="optional-badge">détails</span>
+                        </h3>
+                        <div class="section-body collapsed">
+                            <div class="field-group">
+                                <label>Situation</label>
+                                <div class="chips compact-chips situation-chips" id="before-situation-chips">
+                                    <button type="button" class="chip chip-xs" data-sit="maison">A la maison</button>
+                                    <button type="button" class="chip chip-xs" data-sit="bureau">Au bureau</button>
+                                    <button type="button" class="chip chip-xs" data-sit="exterieur">A l'extérieur</button>
+                                    <button type="button" class="chip chip-xs" data-sit="restaurant">Au restaurant</button>
+                                    <button type="button" class="chip chip-xs" data-sit="seul">Seul(e)</button>
+                                    <button type="button" class="chip chip-xs" data-sit="famille">En famille</button>
+                                    <button type="button" class="chip chip-xs" data-sit="amis">Entre amis</button>
+                                    <button type="button" class="chip chip-xs" data-sit="collegues">Avec collègues</button>
+                                    <button type="button" class="chip chip-xs" data-sit="boyfriend">Avec boyfriend</button>
+                                </div>
+                                <div class="input-with-mic" style="margin-top:8px">
+                                    <textarea id="before-situation" rows="2" placeholder="Précisions sur la situation..."></textarea>
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('before-situation')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <label>Intensité des émotions</label>
+                                <span class="field-hint">Ajustez l'intensité (0 = faible, 10 = très forte)</span>
+                                <div class="intensity-sliders" id="before-intensity"></div>
+                                <p class="empty-hint" id="no-emotions-hint">Sélectionnez des émotions ci-dessus pour régler l'intensité</p>
+                            </div>
+
+                            <div class="field-group">
+                                <label for="before-thoughts">Pensées</label>
+                                <div class="input-with-mic">
+                                    <textarea id="before-thoughts" rows="2" placeholder="Qu'est-ce que vous vous disiez ?"></textarea>
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('before-thoughts')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- EXPANDABLE: Après le repas -->
+                    <section class="form-section collapsible">
+                        <h3 class="section-title toggle-section" onclick="App.toggleSection(this)">
+                            <svg class="toggle-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            Après le repas
+                            <span class="optional-badge">détails</span>
+                        </h3>
+                        <div class="section-body collapsed">
+                            <div class="field-group">
+                                <label for="after-situation">Situation</label>
+                                <div class="input-with-mic">
+                                    <textarea id="after-situation" rows="2" placeholder="Qu'est-ce qui s'est passé après ?"></textarea>
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('after-situation')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="field-group">
+                                <label>Émotions</label>
+                                <div class="chips emotion-chips compact-chips" id="after-emotions">
+                                    <button type="button" class="chip chip-sm" data-emotion="joie">Joie</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="tristesse">Tristesse</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="peur">Peur</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="colere">Colère</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="degout">Dégoût</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="culpabilite">Culpabilité</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="honte">Honte</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="stress">Stress</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="ennui">Ennui</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="frustration">Frustration</button>
+                                    <button type="button" class="chip chip-sm" data-emotion="satisfaction">Satisfaction</button>
+                                </div>
+                                <div class="intensity-sliders" id="after-intensity"></div>
+                            </div>
+
+                            <div class="field-group">
+                                <label for="after-thoughts">Pensées</label>
+                                <div class="input-with-mic">
+                                    <textarea id="after-thoughts" rows="2" placeholder="Ce qui me passe par la tête après..."></textarea>
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('after-thoughts')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- EXPANDABLE: Conséquences -->
+                    <section class="form-section collapsible">
+                        <h3 class="section-title toggle-section" onclick="App.toggleSection(this)">
+                            <svg class="toggle-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            Conséquences
+                            <span class="optional-badge">optionnel</span>
+                        </h3>
+                        <div class="section-body collapsed">
+                            <div class="field-group">
+                                <label for="consequences-positive">Positives</label>
+                                <div class="input-with-mic">
+                                    <textarea id="consequences-positive" rows="2" placeholder="Conséquences positives..."></textarea>
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('consequences-positive')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="field-group">
+                                <label for="consequences-negative">Négatives</label>
+                                <div class="input-with-mic">
+                                    <textarea id="consequences-negative" rows="2" placeholder="Conséquences négatives..."></textarea>
+                                    <button type="button" class="btn-mic" onclick="App.startSpeech('consequences-negative')" aria-label="Dicter">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-save" onclick="App.saveEntry()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            Enregistrer
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- ========== HISTORY SCREEN ========== -->
+        <div id="screen-history" class="screen">
+            <header class="screen-header">
+                <h2>Historique</h2>
+            </header>
+
+            <div class="screen-content">
+                <div class="month-nav">
+                    <button class="btn-icon" onclick="App.prevMonth()" aria-label="Mois précédent">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <span id="month-label" class="month-label"></span>
+                    <button class="btn-icon" onclick="App.nextMonth()" aria-label="Mois suivant">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+
+                <div id="calendar-grid" class="calendar-grid"></div>
+
+                <div class="section-label">
+                    <span id="selected-date-label">Sélectionnez une date</span>
+                </div>
+
+                <div id="history-entries" class="entries-list">
+                    <div class="empty-state">
+                        <p>Sélectionnez une date dans le calendrier</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== EXPORT SCREEN ========== -->
+        <div id="screen-export" class="screen">
+            <header class="screen-header">
+                <h2>Exporter</h2>
+            </header>
+
+            <div class="screen-content">
+                <div class="card export-card">
+                    <h3>Partager avec votre psychologue</h3>
+                    <p class="export-desc">Exportez vos observations pour les partager lors de vos séances.</p>
+
+                    <div class="field-group">
+                        <label>Période</label>
+                        <div class="field-row">
+                            <div class="flex-1">
+                                <label for="export-from" class="label-small">Du</label>
+                                <input type="date" id="export-from">
+                            </div>
+                            <div class="flex-1">
+                                <label for="export-to" class="label-small">Au</label>
+                                <input type="date" id="export-to">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="export-buttons">
+                        <button class="btn-export" onclick="App.exportPrint()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                            Imprimer / PDF
+                        </button>
+                        <button class="btn-export" onclick="App.exportCSV()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                            Exporter CSV
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card export-card">
+                    <h3>Sauvegarde</h3>
+                    <p class="export-desc">Sauvegardez vos données pour ne jamais les perdre.</p>
+
+                    <div class="export-buttons">
+                        <button class="btn-export" onclick="App.exportJSON()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Sauvegarder (JSON)
+                        </button>
+                        <button class="btn-export" onclick="App.importJSON()">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                            Restaurer une sauvegarde
+                        </button>
+                    </div>
+
+                    <div class="stats-box" id="stats-box">
+                        <div class="stat">
+                            <span class="stat-number" id="stat-total">0</span>
+                            <span class="stat-label">entrées</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="stat-days">0</span>
+                            <span class="stat-label">jours</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-number" id="stat-first">-</span>
+                            <span class="stat-label">première entrée</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== TRENDS SCREEN ========== -->
+        <div id="screen-trends" class="screen">
+            <header class="screen-header">
+                <h2>Tendances</h2>
+            </header>
+
+            <div class="screen-content">
+                <!-- Period selector -->
+                <div class="period-selector">
+                    <button class="period-btn" data-period="7" onclick="App.setPeriod(7)">7 j</button>
+                    <button class="period-btn active" data-period="30" onclick="App.setPeriod(30)">30 j</button>
+                    <button class="period-btn" data-period="90" onclick="App.setPeriod(90)">3 mois</button>
+                    <button class="period-btn" data-period="all" onclick="App.setPeriod('all')">Tout</button>
+                </div>
+
+                <!-- Summary -->
+                <div class="trend-card">
+                    <div class="summary-grid">
+                        <div class="summary-item">
+                            <span class="summary-number" id="trend-total">0</span>
+                            <span class="summary-label">entrées</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-number" id="trend-days">0</span>
+                            <span class="summary-label">jours actifs</span>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-number" id="trend-avg">0</span>
+                            <span class="summary-label">entrées/jour</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top emotions before -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg>
+                        Émotions les plus fréquentes
+                    </h3>
+                    <p class="trend-subtitle">Avant le repas</p>
+                    <div id="chart-emotions-before" class="bar-chart"></div>
+                    <p class="trend-subtitle" style="margin-top:16px">Après le repas</p>
+                    <div id="chart-emotions-after" class="bar-chart"></div>
+                </div>
+
+                <!-- Emotion transitions -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                        Transitions émotionnelles
+                    </h3>
+                    <p class="trend-hint">Comment vos émotions évoluent entre avant et après le repas</p>
+                    <div id="chart-transitions" class="transitions-list"></div>
+                </div>
+
+                <!-- Situations -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                        Contextes fréquents
+                    </h3>
+                    <div id="chart-situations" class="bar-chart"></div>
+                </div>
+
+                <!-- Time patterns -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                        Répartition des repas
+                    </h3>
+                    <div id="chart-meals" class="bar-chart"></div>
+                    <p class="trend-subtitle" style="margin-top:16px">Par jour de la semaine</p>
+                    <div id="chart-weekdays" class="weekday-chart"></div>
+                </div>
+
+                <!-- Recurring thoughts -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                        Pensées et thèmes récurrents
+                    </h3>
+                    <div id="chart-words" class="word-cloud"></div>
+                </div>
+
+                <!-- Snacking frequency & contexts -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                        Grignotage
+                    </h3>
+                    <p class="trend-hint">Fréquence et contextes déclencheurs</p>
+                    <div id="chart-snacking-freq" class="evolution-chart"></div>
+                    <p class="trend-subtitle" style="margin-top:16px">Contextes fréquents de grignotage</p>
+                    <div id="chart-snacking-contexts" class="bar-chart"></div>
+                </div>
+
+                <!-- Guilt / shame evolution -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                        Honte &amp; Culpabilité après repas
+                    </h3>
+                    <p class="trend-hint">Évolution semaine par semaine</p>
+                    <div id="chart-guilt" class="evolution-chart"></div>
+                </div>
+
+                <!-- Cravings tracking -->
+                <div class="trend-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                        Pulsions sucrées
+                    </h3>
+                    <div id="chart-cravings-summary" class="summary-grid" style="margin-bottom:14px"></div>
+                    <p class="trend-subtitle">Évolution par semaine</p>
+                    <div id="chart-cravings-freq" class="evolution-chart"></div>
+                </div>
+
+                <!-- Budget -->
+                <div class="trend-card budget-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                        Budget pâtisseries
+                    </h3>
+                    <div id="chart-budget" class="budget-grid"></div>
+                </div>
+
+                <!-- Insights -->
+                <div class="trend-card insight-card" id="insights-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        Observations
+                    </h3>
+                    <div id="insights-list" class="insights-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== DETAIL SCREEN ========== -->
+        <div id="screen-detail" class="screen">
+            <header class="screen-header compact">
+                <button class="btn-back" onclick="App.goBack()" aria-label="Retour">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <h2>Détail</h2>
+                <button class="btn-icon" onclick="App.editFromDetail()" aria-label="Modifier">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                </button>
+            </header>
+            <div class="screen-content" id="detail-content"></div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav id="bottom-nav">
+            <button class="nav-btn active" data-screen="home" onclick="App.navigate('home')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Aujourd'hui</span>
+            </button>
+            <button class="nav-btn" data-screen="history" onclick="App.navigate('history')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                <span>Historique</span>
+            </button>
+            <button class="nav-btn" data-screen="trends" onclick="App.navigate('trends')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                <span>Tendances</span>
+            </button>
+            <button class="nav-btn" data-screen="export" onclick="App.navigate('export')">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path><polyline points="16 6 12 2 8 6"></polyline><line x1="12" y1="2" x2="12" y2="15"></line></svg>
+                <span>Exporter</span>
+            </button>
+        </nav>
+
+        <!-- Toast notification -->
+        <div id="toast" class="toast hidden"></div>
+
+        <!-- Hidden file input for import -->
+        <input type="file" id="import-file" accept=".json" class="hidden" onchange="App.handleImport(event)">
+
+        <!-- Speech indicator -->
+        <div id="speech-indicator" class="speech-indicator hidden">
+            <div class="speech-pulse"></div>
+            <span>Écoute en cours...</span>
+            <button onclick="App.stopSpeech()">Arrêter</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
