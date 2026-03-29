@@ -1,9 +1,25 @@
 const App = (() => {
-    const DB_NAME = 'journal-auto-observation';
-    const DB_VERSION = 1;
-    const STORE_NAME = 'entries';
+    // ===== FIREBASE =====
 
-    let db = null;
+    const firebaseConfig = {
+        apiKey: "AIzaSyD8NYyre38S7xTKVPhDGuwwRGDPoE9uFhg",
+        authDomain: "journal-alimentaire-448a4.firebaseapp.com",
+        projectId: "journal-alimentaire-448a4",
+        storageBucket: "journal-alimentaire-448a4.firebasestorage.app",
+        messagingSenderId: "552121003349",
+        appId: "1:552121003349:web:61c19eaa82aad15bddd3dc"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const firestore = firebase.firestore();
+    const auth = firebase.auth();
+    auth.languageCode = 'fr';
+    let currentUser = null;
+
+    function entriesRef() {
+        return firestore.collection('users').doc(currentUser.uid).collection('entries');
+    }
+
     let currentScreen = 'home';
     let screenHistory = [];
     let editingEntryId = null;
@@ -36,92 +52,116 @@ const App = (() => {
         'satisfaction': 'Satisfaction'
     };
 
-    // ===== DATABASE =====
+    // ===== DATABASE (Firestore) =====
 
-    function openDB() {
-        return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
-            request.onupgradeneeded = (e) => {
+    async function dbAdd(entry) {
+        await entriesRef().doc(entry.id).set(entry);
+    }
+
+    async function dbGet(id) {
+        const doc = await entriesRef().doc(id).get();
+        return doc.exists ? doc.data() : undefined;
+    }
+
+    async function dbDelete(id) {
+        await entriesRef().doc(id).delete();
+    }
+
+    async function dbGetByDate(dateStr) {
+        const snap = await entriesRef().where('date', '==', dateStr).get();
+        return snap.docs.map(d => d.data()).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    }
+
+    async function dbGetAll() {
+        const snap = await entriesRef().get();
+        return snap.docs.map(d => d.data());
+    }
+
+    async function dbGetDateRange(from, to) {
+        const snap = await entriesRef().where('date', '>=', from).where('date', '<=', to).get();
+        return snap.docs.map(d => d.data()).sort((a, b) =>
+            a.date === b.date ? (a.time || '').localeCompare(b.time || '') : a.date.localeCompare(b.date)
+        );
+    }
+
+    async function dbGetDatesWithEntries(year, month) {
+        const from = `${year}-${String(month + 1).padStart(2, '0')}-01`;
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+        const snap = await entriesRef().where('date', '>=', from).where('date', '<=', to).get();
+        return new Set(snap.docs.map(d => d.data().date));
+    }
+
+    // ===== AUTH =====
+
+    function showLoginScreen() {
+        document.getElementById('login-screen').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+    }
+
+    function hideLoginScreen() {
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('app').classList.remove('hidden');
+    }
+
+    async function loginWithGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        try {
+            await auth.signInWithPopup(provider);
+        } catch (e) {
+            if (e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user') {
+                try { await auth.signInWithRedirect(provider); } catch (e2) { showToast('Erreur de connexion'); }
+            } else if (e.code !== 'auth/cancelled-popup-request') {
+                showToast('Erreur de connexion');
+                console.error(e);
+            }
+        }
+    }
+
+    function logout() {
+        showConfirm('Se déconnecter ?', 'Vos données restent sauvegardées dans le cloud.', async () => {
+            await auth.signOut();
+        });
+    }
+
+    // ===== MIGRATION (IndexedDB → Firestore) =====
+
+    function readOldIndexedDB() {
+        return new Promise((resolve) => {
+            const request = indexedDB.open('journal-auto-observation', 1);
+            request.onerror = () => resolve([]);
+            request.onupgradeneeded = (e) => { e.target.transaction.abort(); resolve([]); };
+            request.onsuccess = (e) => {
                 const db = e.target.result;
-                if (!db.objectStoreNames.contains(STORE_NAME)) {
-                    const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    store.createIndex('date', 'date', { unique: false });
-                    store.createIndex('createdAt', 'createdAt', { unique: false });
+                if (!db.objectStoreNames.contains('entries')) { db.close(); resolve([]); return; }
+                const tx = db.transaction('entries', 'readonly');
+                const req = tx.objectStore('entries').getAll();
+                req.onsuccess = () => { db.close(); resolve(req.result || []); };
+                req.onerror = () => { db.close(); resolve([]); };
+            };
+        });
+    }
+
+    async function migrateIfNeeded() {
+        const key = 'journal-migrated-' + currentUser.uid;
+        if (localStorage.getItem(key)) return;
+
+        const oldEntries = await readOldIndexedDB();
+        if (oldEntries.length > 0) {
+            showToast(`Migration de ${oldEntries.length} entrées...`, 5000);
+            const BATCH_SIZE = 400;
+            for (let i = 0; i < oldEntries.length; i += BATCH_SIZE) {
+                const batch = firestore.batch();
+                const chunk = oldEntries.slice(i, i + BATCH_SIZE);
+                for (const entry of chunk) {
+                    batch.set(entriesRef().doc(entry.id), entry);
                 }
-            };
-            request.onsuccess = (e) => { db = e.target.result; resolve(db); };
-            request.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbAdd(entry) {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).put(entry);
-            tx.oncomplete = () => resolve();
-            tx.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbGet(id) {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).get(id);
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbDelete(id) {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readwrite');
-            tx.objectStore(STORE_NAME).delete(id);
-            tx.oncomplete = () => resolve();
-            tx.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbGetByDate(dateStr) {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).index('date').getAll(dateStr);
-            req.onsuccess = () => resolve(req.result.sort((a, b) => (a.time || '').localeCompare(b.time || '')));
-            req.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbGetAll() {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).getAll();
-            req.onsuccess = () => resolve(req.result);
-            req.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbGetDateRange(from, to) {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).index('date').getAll(IDBKeyRange.bound(from, to));
-            req.onsuccess = () => {
-                resolve(req.result.sort((a, b) => a.date === b.date
-                    ? (a.time || '').localeCompare(b.time || '')
-                    : a.date.localeCompare(b.date)));
-            };
-            req.onerror = (e) => reject(e.target.error);
-        });
-    }
-
-    function dbGetDatesWithEntries(year, month) {
-        return new Promise((resolve, reject) => {
-            const from = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-            const lastDay = new Date(year, month + 1, 0).getDate();
-            const to = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const req = tx.objectStore(STORE_NAME).index('date').getAll(IDBKeyRange.bound(from, to));
-            req.onsuccess = () => resolve(new Set(req.result.map(e => e.date)));
-            req.onerror = (e) => reject(e.target.error);
-        });
+                await batch.commit();
+            }
+            showToast(`${oldEntries.length} entrées migrées avec succès !`);
+        }
+        localStorage.setItem(key, 'true');
     }
 
     // ===== NAVIGATION =====
@@ -803,12 +843,6 @@ const App = (() => {
             }
         };
 
-        document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('recording'));
-        const el = document.getElementById(targetId);
-        const micBtn = el?.closest('.input-with-mic')?.querySelector('.btn-mic');
-        if (micBtn) micBtn.classList.add('recording');
-        document.getElementById('speech-indicator').classList.remove('hidden');
-
         try { recognition.start(); } catch (e) { stopSpeech(); }
     }
 
@@ -818,8 +852,6 @@ const App = (() => {
             try { recognition.stop(); } catch (e) { /* ignore */ }
         }
         recognition = null;
-        document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('recording'));
-        document.getElementById('speech-indicator').classList.add('hidden');
     }
 
     // ===== EXPORT =====
@@ -1846,23 +1878,37 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
     // ===== INIT =====
 
     async function init() {
-        try { await openDB(); } catch (e) {
-            console.error('Database error:', e);
-            showToast('Erreur d\'initialisation');
-            return;
+        try {
+            await firestore.enablePersistence({ synchronizeTabs: true });
+        } catch (e) {
+            if (e.code !== 'failed-precondition' && e.code !== 'unimplemented') {
+                console.warn('Offline persistence error:', e);
+            }
         }
 
-        initChips();
-        initSpeech();
-        await presetPin();
-        updateLockButton();
-        initAutoLock();
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                hideLoginScreen();
 
-        if (hasPin()) {
-            showLockScreen('unlock');
-        }
+                await migrateIfNeeded();
 
-        loadTodayEntries();
+                initChips();
+                initSpeech();
+                await presetPin();
+                updateLockButton();
+                initAutoLock();
+
+                if (hasPin()) {
+                    showLockScreen('unlock');
+                }
+
+                loadTodayEntries();
+            } else {
+                currentUser = null;
+                showLoginScreen();
+            }
+        });
 
         if ('serviceWorker' in navigator) {
             try { await navigator.serviceWorker.register('sw.js'); } catch (e) { /* optional */ }
@@ -1878,6 +1924,7 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         exportJSON, exportCSV, exportPrint, importJSON, handleImport,
         toggleSection, quickNormalEntry, duplicateLastEntry, duplicateEntry,
         setPeriod, setCraving, setCravingSatisfied,
-        pinInput, pinDelete, lockApp, removePin
+        pinInput, pinDelete, lockApp, removePin,
+        loginWithGoogle, logout
     };
 })();
