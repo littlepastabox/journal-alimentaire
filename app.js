@@ -1709,172 +1709,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         return count > 0 ? sum / count : 0;
     }
 
-    // ===== PIN LOCK =====
-
-    const PRESET_PIN = '2708';
-    let pinBuffer = '';
-    let pinMode = 'unlock'; // 'unlock', 'set', 'confirm'
-    let pinCandidate = '';
-    async function hashPin(pin) {
-        const data = new TextEncoder().encode('journal-salt-2026-' + pin);
-        const hash = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    function hasPin() {
-        return !!localStorage.getItem('journal-pin');
-    }
-
-    async function presetPin() {
-        if (!hasPin()) {
-            const hashed = await hashPin(PRESET_PIN);
-            localStorage.setItem('journal-pin', hashed);
-        }
-    }
-
-    function showLockScreen(mode) {
-        pinMode = mode;
-        pinBuffer = '';
-        pinCandidate = '';
-        updatePinDots();
-
-        const title = document.getElementById('lock-title');
-        const subtitle = document.getElementById('lock-subtitle');
-        const removeBtn = document.getElementById('lock-remove-btn');
-        const errorEl = document.getElementById('pin-error');
-        errorEl.classList.add('hidden');
-        removeBtn.classList.add('hidden');
-
-        if (mode === 'set') {
-            title.textContent = 'Créer un code';
-            subtitle.textContent = 'Choisissez un code à 4 chiffres';
-        } else if (mode === 'confirm') {
-            title.textContent = 'Confirmer le code';
-            subtitle.textContent = 'Saisissez le code à nouveau';
-        } else {
-            title.textContent = 'Entrez votre code';
-            subtitle.textContent = '';
-            removeBtn.classList.remove('hidden');
-        }
-
-        document.getElementById('lock-screen').classList.remove('hidden');
-    }
-
-    function hideLockScreen() {
-        document.getElementById('lock-screen').classList.add('hidden');
-        pinBuffer = '';
-    }
-
-    function updatePinDots() {
-        const dots = document.querySelectorAll('#pin-dots .pin-dot');
-        dots.forEach((d, i) => d.classList.toggle('filled', i < pinBuffer.length));
-    }
-
-    async function pinInput(digit) {
-        if (pinBuffer.length >= 4) return;
-        pinBuffer += String(digit);
-        updatePinDots();
-
-        if (pinBuffer.length === 4) {
-            setTimeout(() => handlePinComplete(), 150);
-        }
-    }
-
-    function pinDelete() {
-        if (pinBuffer.length > 0) {
-            pinBuffer = pinBuffer.slice(0, -1);
-            updatePinDots();
-        }
-        document.getElementById('pin-error').classList.add('hidden');
-    }
-
-    async function handlePinComplete() {
-        const errorEl = document.getElementById('pin-error');
-
-        if (pinMode === 'set') {
-            pinCandidate = pinBuffer;
-            pinBuffer = '';
-            updatePinDots();
-            pinMode = 'confirm';
-            document.getElementById('lock-title').textContent = 'Confirmer le code';
-            document.getElementById('lock-subtitle').textContent = 'Saisissez le code à nouveau';
-            return;
-        }
-
-        if (pinMode === 'confirm') {
-            if (pinBuffer === pinCandidate) {
-                const hashed = await hashPin(pinBuffer);
-                localStorage.setItem('journal-pin', hashed);
-                hideLockScreen();
-                showToast('Code activé');
-                updateLockButton();
-            } else {
-                errorEl.textContent = 'Les codes ne correspondent pas';
-                errorEl.classList.remove('hidden');
-                pinBuffer = '';
-                updatePinDots();
-                pinMode = 'set';
-                document.getElementById('lock-title').textContent = 'Créer un code';
-                document.getElementById('lock-subtitle').textContent = 'Choisissez un code à 4 chiffres';
-                shakeDots();
-            }
-            return;
-        }
-
-        // unlock mode
-        const stored = localStorage.getItem('journal-pin');
-        const hashed = await hashPin(pinBuffer);
-        if (hashed === stored) {
-            hideLockScreen();
-        } else {
-            errorEl.textContent = 'Code incorrect';
-            errorEl.classList.remove('hidden');
-            pinBuffer = '';
-            updatePinDots();
-            shakeDots();
-        }
-    }
-
-    function shakeDots() {
-        const dots = document.getElementById('pin-dots');
-        dots.classList.add('shake');
-        setTimeout(() => dots.classList.remove('shake'), 500);
-    }
-
-    function lockApp() {
-        if (hasPin()) {
-            showLockScreen('unlock');
-        } else {
-            showLockScreen('set');
-        }
-    }
-
-    function removePin() {
-        showConfirm('Désactiver le code ?', 'L\'application ne sera plus verrouillée.', () => {
-            localStorage.removeItem('journal-pin');
-            hideLockScreen();
-            showToast('Code désactivé');
-            updateLockButton();
-        });
-    }
-
-    function updateLockButton() {
-        const btn = document.getElementById('btn-lock');
-        if (btn) {
-            btn.innerHTML = hasPin()
-                ? '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>'
-                : '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>';
-        }
-    }
-
-    function initAutoLock() {
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden && hasPin()) {
-                showLockScreen('unlock');
-            }
-        });
-    }
-
     // ===== INIT =====
 
     async function init() {
@@ -1895,14 +1729,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
 
                 initChips();
                 initSpeech();
-                await presetPin();
-                updateLockButton();
-                initAutoLock();
-
-                if (hasPin()) {
-                    showLockScreen('unlock');
-                }
-
                 loadTodayEntries();
             } else {
                 currentUser = null;
@@ -1924,7 +1750,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         exportJSON, exportCSV, exportPrint, importJSON, handleImport,
         toggleSection, quickNormalEntry, duplicateLastEntry, duplicateEntry,
         setPeriod, setCraving, setCravingSatisfied,
-        pinInput, pinDelete, lockApp, removePin,
         loginWithGoogle, logout
     };
 })();
