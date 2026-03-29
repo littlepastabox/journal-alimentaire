@@ -738,21 +738,30 @@ const App = (() => {
 
     // ===== SPEECH TO TEXT =====
 
-    function initSpeech() {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return;
-        recognition = 'available';
-    }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    function initSpeech() {}
 
     function startSpeech(targetId) {
+        const target = document.getElementById(targetId);
+
+        if (isIOS) {
+            if (target) {
+                target.focus();
+                showToast('Tapez le micro 🎤 en bas de votre clavier pour dicter', 4000);
+            }
+            return;
+        }
+
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) {
-            showToast('Reconnaissance vocale non disponible');
+            if (target) target.focus();
+            showToast('Dictée non disponible — tapez le micro 🎤 du clavier');
             return;
         }
 
         if (currentMicTarget) { stopSpeech(); return; }
-
         currentMicTarget = targetId;
 
         recognition = new SR();
@@ -762,21 +771,21 @@ const App = (() => {
 
         recognition.onresult = (event) => {
             if (!currentMicTarget) return;
-            const target = document.getElementById(currentMicTarget);
-            if (!target) return;
+            const t = document.getElementById(currentMicTarget);
+            if (!t) return;
 
             let transcript = '';
             for (let i = 0; i < event.results.length; i++) {
                 transcript += event.results[i][0].transcript;
             }
             if (transcript) {
-                target.value = target.value ? target.value + ' ' + transcript : transcript;
+                t.value = t.value ? t.value + ' ' + transcript : transcript;
             }
         };
 
         recognition.onerror = (event) => {
             if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                showToast('Accès au micro refusé — vérifiez les réglages Safari');
+                showToast('Accès au micro refusé');
                 stopSpeech();
             } else if (event.error === 'no-speech') {
                 if (currentMicTarget) {
@@ -803,7 +812,6 @@ const App = (() => {
     }
 
     function stopSpeech() {
-        const target = currentMicTarget;
         currentMicTarget = null;
         if (recognition && typeof recognition.stop === 'function') {
             try { recognition.stop(); } catch (e) { /* ignore */ }
@@ -956,12 +964,12 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         URL.revokeObjectURL(a.href);
     }
 
-    function showToast(message) {
+    function showToast(message, duration) {
         const t = document.getElementById('toast');
         t.textContent = message;
         t.classList.remove('hidden');
         t.classList.add('show');
-        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.add('hidden'), 300); }, 2500);
+        setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.add('hidden'), 300); }, duration || 2500);
     }
 
     function showConfirm(title, message, onConfirm) {
