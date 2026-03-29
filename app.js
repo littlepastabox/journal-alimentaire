@@ -1657,8 +1657,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
     let pinBuffer = '';
     let pinMode = 'unlock'; // 'unlock', 'set', 'confirm'
     let pinCandidate = '';
-    let biometricAvailable = false;
-
     async function hashPin(pin) {
         const data = new TextEncoder().encode('journal-salt-2026-' + pin);
         const hash = await crypto.subtle.digest('SHA-256', data);
@@ -1676,88 +1674,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         }
     }
 
-    async function checkBiometricAvailable() {
-        if (!window.PublicKeyCredential) return false;
-        try {
-            return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        } catch { return false; }
-    }
-
-    function hasBiometric() {
-        return !!localStorage.getItem('journal-biometric-cred');
-    }
-
-    async function enrollBiometric() {
-        try {
-            const challenge = crypto.getRandomValues(new Uint8Array(32));
-            const credential = await navigator.credentials.create({
-                publicKey: {
-                    challenge,
-                    rp: { name: 'Mon Journal', id: location.hostname || 'localhost' },
-                    user: {
-                        id: crypto.getRandomValues(new Uint8Array(16)),
-                        name: 'utilisateur',
-                        displayName: 'Utilisateur'
-                    },
-                    pubKeyCredParams: [
-                        { type: 'public-key', alg: -7 },
-                        { type: 'public-key', alg: -257 }
-                    ],
-                    authenticatorSelection: {
-                        authenticatorAttachment: 'platform',
-                        userVerification: 'required',
-                        residentKey: 'discouraged'
-                    },
-                    timeout: 60000
-                }
-            });
-
-            const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
-            localStorage.setItem('journal-biometric-cred', credId);
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    async function authenticateBiometric() {
-        const credIdB64 = localStorage.getItem('journal-biometric-cred');
-        if (!credIdB64) return false;
-
-        try {
-            const credId = Uint8Array.from(atob(credIdB64), c => c.charCodeAt(0));
-            await navigator.credentials.get({
-                publicKey: {
-                    challenge: crypto.getRandomValues(new Uint8Array(32)),
-                    allowCredentials: [{ type: 'public-key', id: credId, transports: ['internal'] }],
-                    userVerification: 'required',
-                    timeout: 60000
-                }
-            });
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    async function tryBiometric() {
-        if (!hasBiometric()) {
-            const ok = await enrollBiometric();
-            if (ok) {
-                showToast('Face ID activé');
-                hideLockScreen();
-            } else {
-                showToast('Face ID non disponible');
-            }
-            return;
-        }
-
-        const ok = await authenticateBiometric();
-        if (ok) {
-            hideLockScreen();
-        }
-    }
-
     function showLockScreen(mode) {
         pinMode = mode;
         pinBuffer = '';
@@ -1768,11 +1684,8 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         const subtitle = document.getElementById('lock-subtitle');
         const removeBtn = document.getElementById('lock-remove-btn');
         const errorEl = document.getElementById('pin-error');
-        const bioBtn = document.getElementById('biometric-btn');
-        const bioLabel = document.getElementById('biometric-label');
         errorEl.classList.add('hidden');
         removeBtn.classList.add('hidden');
-        bioBtn.classList.add('hidden');
 
         if (mode === 'set') {
             title.textContent = 'Créer un code';
@@ -1784,11 +1697,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
             title.textContent = 'Entrez votre code';
             subtitle.textContent = '';
             removeBtn.classList.remove('hidden');
-
-            if (biometricAvailable) {
-                bioBtn.classList.remove('hidden');
-                bioLabel.textContent = hasBiometric() ? 'Face ID' : 'Activer Face ID';
-            }
         }
 
         document.getElementById('lock-screen').classList.remove('hidden');
@@ -1921,7 +1829,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         initChips();
         initSpeech();
         await presetPin();
-        biometricAvailable = await checkBiometricAvailable();
         updateLockButton();
         initAutoLock();
 
@@ -1945,6 +1852,6 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
         exportJSON, exportCSV, exportPrint, importJSON, handleImport,
         toggleSection, quickNormalEntry, duplicateLastEntry, duplicateEntry,
         setPeriod, setCraving, setCravingSatisfied,
-        pinInput, pinDelete, lockApp, removePin, tryBiometric
+        pinInput, pinDelete, lockApp, removePin
     };
 })();

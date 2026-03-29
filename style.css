@@ -181,37 +181,6 @@ body {
     80% { transform: translateX(6px); }
 }
 
-.biometric-btn {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    padding: 14px 28px;
-    margin-bottom: 12px;
-    border: 2px solid var(--primary);
-    border-radius: var(--radius);
-    background: var(--primary-light);
-    color: var(--primary-dark);
-    font-size: 14px;
-    font-weight: 600;
-    font-family: inherit;
-    cursor: pointer;
-    transition: all 0.15s;
-}
-
-.biometric-btn:active {
-    background: var(--primary);
-    color: white;
-    transform: scale(0.96);
-}
-
-.biometric-btn svg {
-    color: var(--primary);
-}
-
-.biometric-btn:active svg {
-    color: white;
-}
 
 .lock-remove-btn {
     margin-top: 24px;
