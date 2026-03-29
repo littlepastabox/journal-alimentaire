@@ -22,6 +22,7 @@ const App = (() => {
     };
 
     const EMOTION_LABELS = {
+        'neutre': 'Neutre',
         'joie': 'Joie',
         'tristesse': 'Tristesse',
         'peur': 'Peur / Angoisse',

@@ -147,11 +147,8 @@
                         </div>
 
                         <div class="field-group">
-                            <div class="input-with-mic">
+                            <div>
                                 <textarea id="entry-behavior" rows="2" placeholder="Qu'avez-vous mangé ? Comment ?"></textarea>
-                                <button type="button" class="btn-mic" onclick="App.startSpeech('entry-behavior')" aria-label="Dicter">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                </button>
                             </div>
                         </div>
 
@@ -164,6 +161,7 @@
                     <section class="form-section">
                         <label class="section-label-inline">Comment vous sentiez-vous ?</label>
                         <div class="chips emotion-chips compact-chips" id="quick-emotions">
+                            <button type="button" class="chip chip-sm" data-emotion="neutre">Neutre</button>
                             <button type="button" class="chip chip-sm" data-emotion="joie">Joie</button>
                             <button type="button" class="chip chip-sm" data-emotion="tristesse">Tristesse</button>
                             <button type="button" class="chip chip-sm" data-emotion="peur">Peur</button>
@@ -180,11 +178,8 @@
 
                     <!-- COMPACT: Notes rapides (always visible) -->
                     <section class="form-section">
-                        <div class="input-with-mic">
+                        <div>
                             <textarea id="quick-notes" rows="2" placeholder="Notes, pensées, observations..."></textarea>
-                            <button type="button" class="btn-mic" onclick="App.startSpeech('quick-notes')" aria-label="Dicter">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                            </button>
                         </div>
                     </section>
 
@@ -207,11 +202,8 @@
                                 </div>
                             </div>
                             <div id="craving-price-row" class="craving-price-row hidden">
-                                <div class="input-with-mic" style="margin-bottom:8px">
+                                <div style="margin-bottom:8px">
                                     <input type="text" id="pastry-desc" placeholder="Quelle pâtisserie ?">
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('pastry-desc')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                                 <div class="price-input-group">
                                     <input type="number" id="pastry-price" step="0.50" min="0" placeholder="0.00" inputmode="decimal">
@@ -242,11 +234,8 @@
                                     <button type="button" class="chip chip-xs" data-sit="collegues">Avec collègues</button>
                                     <button type="button" class="chip chip-xs" data-sit="boyfriend">Avec boyfriend</button>
                                 </div>
-                                <div class="input-with-mic" style="margin-top:8px">
+                                <div style="margin-top:8px">
                                     <textarea id="before-situation" rows="2" placeholder="Précisions sur la situation..."></textarea>
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('before-situation')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                             </div>
 
@@ -259,11 +248,8 @@
 
                             <div class="field-group">
                                 <label for="before-thoughts">Pensées</label>
-                                <div class="input-with-mic">
+                                <div>
                                     <textarea id="before-thoughts" rows="2" placeholder="Qu'est-ce que vous vous disiez ?"></textarea>
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('before-thoughts')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -279,17 +265,15 @@
                         <div class="section-body collapsed">
                             <div class="field-group">
                                 <label for="after-situation">Situation</label>
-                                <div class="input-with-mic">
+                                <div>
                                     <textarea id="after-situation" rows="2" placeholder="Qu'est-ce qui s'est passé après ?"></textarea>
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('after-situation')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                             </div>
 
                             <div class="field-group">
                                 <label>Émotions</label>
                                 <div class="chips emotion-chips compact-chips" id="after-emotions">
+                                    <button type="button" class="chip chip-sm" data-emotion="neutre">Neutre</button>
                                     <button type="button" class="chip chip-sm" data-emotion="joie">Joie</button>
                                     <button type="button" class="chip chip-sm" data-emotion="tristesse">Tristesse</button>
                                     <button type="button" class="chip chip-sm" data-emotion="peur">Peur</button>
@@ -307,11 +291,8 @@
 
                             <div class="field-group">
                                 <label for="after-thoughts">Pensées</label>
-                                <div class="input-with-mic">
+                                <div>
                                     <textarea id="after-thoughts" rows="2" placeholder="Ce qui me passe par la tête après..."></textarea>
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('after-thoughts')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -327,20 +308,14 @@
                         <div class="section-body collapsed">
                             <div class="field-group">
                                 <label for="consequences-positive">Positives</label>
-                                <div class="input-with-mic">
+                                <div>
                                     <textarea id="consequences-positive" rows="2" placeholder="Conséquences positives..."></textarea>
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('consequences-positive')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                             </div>
                             <div class="field-group">
                                 <label for="consequences-negative">Négatives</label>
-                                <div class="input-with-mic">
+                                <div>
                                     <textarea id="consequences-negative" rows="2" placeholder="Conséquences négatives..."></textarea>
-                                    <button type="button" class="btn-mic" onclick="App.startSpeech('consequences-negative')" aria-label="Dicter">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
-                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -634,12 +609,6 @@
         <!-- Hidden file input for import -->
         <input type="file" id="import-file" accept=".json" class="hidden" onchange="App.handleImport(event)">
 
-        <!-- Speech indicator -->
-        <div id="speech-indicator" class="speech-indicator hidden">
-            <div class="speech-pulse"></div>
-            <span>Écoute en cours...</span>
-            <button onclick="App.stopSpeech()">Arrêter</button>
-        </div>
     </div>
 
     <script src="app.js"></script>
