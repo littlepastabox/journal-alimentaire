@@ -741,57 +741,74 @@ const App = (() => {
     function initSpeech() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR) return;
+        recognition = 'available';
+    }
+
+    function startSpeech(targetId) {
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SR) {
+            showToast('Reconnaissance vocale non disponible');
+            return;
+        }
+
+        if (currentMicTarget) { stopSpeech(); return; }
+
+        currentMicTarget = targetId;
 
         recognition = new SR();
         recognition.lang = 'fr-FR';
-        recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.continuous = false;
+        recognition.interimResults = false;
 
         recognition.onresult = (event) => {
             if (!currentMicTarget) return;
             const target = document.getElementById(currentMicTarget);
             if (!target) return;
 
-            let finalTranscript = '';
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i].isFinal) finalTranscript += event.results[i][0].transcript;
+            let transcript = '';
+            for (let i = 0; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
             }
-
-            if (finalTranscript) {
-                target.value = target.value ? target.value + ' ' + finalTranscript : finalTranscript;
+            if (transcript) {
+                target.value = target.value ? target.value + ' ' + transcript : transcript;
             }
         };
 
         recognition.onerror = (event) => {
-            if (event.error === 'not-allowed') showToast('Accès au microphone refusé');
-            else if (event.error !== 'aborted') showToast('Erreur de reconnaissance vocale');
-            stopSpeech();
+            if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                showToast('Accès au micro refusé — vérifiez les réglages Safari');
+                stopSpeech();
+            } else if (event.error === 'no-speech') {
+                if (currentMicTarget) {
+                    try { recognition.start(); } catch (e) { stopSpeech(); }
+                }
+            } else if (event.error !== 'aborted') {
+                stopSpeech();
+            }
         };
 
-        recognition.onend = () => stopSpeech();
-    }
+        recognition.onend = () => {
+            if (currentMicTarget) {
+                try { recognition.start(); } catch (e) { stopSpeech(); }
+            }
+        };
 
-    function startSpeech(targetId) {
-        if (!recognition) {
-            showToast('Utilisez le micro du clavier pour dicter');
-            return;
-        }
-        if (currentMicTarget) { stopSpeech(); return; }
-
-        currentMicTarget = targetId;
         document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('recording'));
-
         const el = document.getElementById(targetId);
         const micBtn = el?.closest('.input-with-mic')?.querySelector('.btn-mic');
         if (micBtn) micBtn.classList.add('recording');
-
         document.getElementById('speech-indicator').classList.remove('hidden');
+
         try { recognition.start(); } catch (e) { stopSpeech(); }
     }
 
     function stopSpeech() {
-        try { recognition?.stop(); } catch (e) { /* ignore */ }
+        const target = currentMicTarget;
         currentMicTarget = null;
+        if (recognition && typeof recognition.stop === 'function') {
+            try { recognition.stop(); } catch (e) { /* ignore */ }
+        }
+        recognition = null;
         document.querySelectorAll('.btn-mic').forEach(b => b.classList.remove('recording'));
         document.getElementById('speech-indicator').classList.add('hidden');
     }
