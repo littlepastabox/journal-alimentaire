@@ -164,6 +164,35 @@ const App = (() => {
         localStorage.setItem(key, 'true');
     }
 
+    async function migrateConsequences() {
+        const key = 'journal-conseq-migrated-' + currentUser.uid;
+        if (localStorage.getItem(key)) return;
+
+        const all = await dbGetAll();
+        const toUpdate = all.filter(e =>
+            (e.consequences?.positive || e.consequences?.negative)
+        );
+
+        if (toUpdate.length > 0) {
+            const BATCH_SIZE = 400;
+            for (let i = 0; i < toUpdate.length; i += BATCH_SIZE) {
+                const batch = firestore.batch();
+                for (const entry of toUpdate.slice(i, i + BATCH_SIZE)) {
+                    const parts = [];
+                    if (entry.after?.thoughts) parts.push(entry.after.thoughts);
+                    if (entry.consequences.positive) parts.push('+ ' + entry.consequences.positive);
+                    if (entry.consequences.negative) parts.push('- ' + entry.consequences.negative);
+                    batch.update(entriesRef().doc(entry.id), {
+                        'after.thoughts': parts.join('\n'),
+                        consequences: firebase.firestore.FieldValue.delete()
+                    });
+                }
+                await batch.commit();
+            }
+        }
+        localStorage.setItem(key, 'true');
+    }
+
     // ===== NAVIGATION =====
 
     let trendsPeriod = 30;
@@ -317,7 +346,6 @@ const App = (() => {
                 duration: '',
                 before: { situation: '', emotions: [], thoughts: '' },
                 after: { situation: '', emotions: [], thoughts: '' },
-                consequences: { positive: '', negative: '' },
                 situationChips: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -417,9 +445,6 @@ const App = (() => {
         document.getElementById('after-situation').value = '';
         document.getElementById('after-thoughts').value = '';
 
-        document.getElementById('consequences-positive').value = '';
-        document.getElementById('consequences-negative').value = '';
-
         setCraving(null);
 
         document.querySelectorAll('.collapsible .section-body').forEach(b => b.classList.add('collapsed'));
@@ -516,8 +541,6 @@ const App = (() => {
         document.getElementById('after-situation').value = entry.after?.situation || '';
         document.getElementById('after-thoughts').value = entry.after?.thoughts || '';
 
-        document.getElementById('consequences-positive').value = entry.consequences?.positive || '';
-        document.getElementById('consequences-negative').value = entry.consequences?.negative || '';
 
         // Craving fields
         if (entry.craving === true) {
@@ -538,13 +561,11 @@ const App = (() => {
         // Expand sections that have content
         const hasBefore = entry.before?.situation || sitChips.length > 0;
         const hasAfter = entry.after?.situation || afterEmotions.length > 0 || entry.after?.thoughts;
-        const hasConseq = entry.consequences?.positive || entry.consequences?.negative;
 
         document.querySelectorAll('.collapsible .section-body').forEach(b => b.classList.add('collapsed'));
         document.querySelectorAll('.toggle-chevron').forEach(c => c.style.transform = '');
 
         if (hasAfter) expandSection(0);
-        if (hasConseq) expandSection(1);
     }
 
     function expandSection(index) {
@@ -605,10 +626,6 @@ const App = (() => {
                 situation: document.getElementById('after-situation').value.trim(),
                 emotions: getSelectedEmotions('after'),
                 thoughts: document.getElementById('after-thoughts').value.trim()
-            },
-            consequences: {
-                positive: document.getElementById('consequences-positive').value.trim(),
-                negative: document.getElementById('consequences-negative').value.trim()
             },
             situationChips: getSelectedSituationChips(),
             craving: getCravingValue(),
@@ -720,12 +737,6 @@ const App = (() => {
                 cravingText += ' — Résistée';
             }
             html += `<div class="detail-section"><h3>Pulsion sucrée</h3>${field('', cravingText)}</div>`;
-        }
-
-        if (entry.consequences?.positive || entry.consequences?.negative) {
-            html += `<div class="detail-section"><h3>Conséquences</h3>
-                ${field('Positives', entry.consequences?.positive)}
-                ${field('Négatives', entry.consequences?.negative)}</div>`;
         }
 
         return html;
@@ -891,7 +902,7 @@ const App = (() => {
         const entries = await getExportEntries();
         if (!entries.length) { showToast('Aucune entrée à exporter'); return; }
 
-        const headers = ['Date', 'Heure', 'Type de repas', 'Comportement', 'Durée', 'Avant - Situation', 'Avant - Émotions', 'Avant - Pensées', 'Après - Situation', 'Après - Émotions', 'Après - Pensées', 'Pulsion sucrée', 'Assouvie', 'Prix pâtisserie', 'Conséquences +', 'Conséquences -'];
+        const headers = ['Date', 'Heure', 'Type de repas', 'Comportement', 'Durée', 'Avant - Situation', 'Avant - Émotions', 'Avant - Pensées', 'Après - Situation', 'Après - Émotions', 'Après - Pensées', 'Pulsion sucrée', 'Assouvie', 'Prix pâtisserie'];
         const rows = entries.map(e => [
             e.date, e.time || '', MEAL_LABELS[e.mealType] || '', e.behavior || '', e.duration || '',
             e.before?.situation || '',
@@ -902,8 +913,7 @@ const App = (() => {
             e.after?.thoughts || '',
             e.craving ? 'Oui' : (e.craving === false ? 'Non' : ''),
             e.cravingSatisfied ? 'Oui' : (e.cravingSatisfied === false ? 'Non' : ''),
-            e.pastryPrice > 0 ? e.pastryPrice.toFixed(2) : '',
-            e.consequences?.positive || '', e.consequences?.negative || ''
+            e.pastryPrice > 0 ? e.pastryPrice.toFixed(2) : ''
         ]);
 
         const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\n');
@@ -948,9 +958,6 @@ ${bEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
 <div class="field"><span class="label">Situation : </span><span class="value">${escapeHtml(e.after?.situation || '-')}</span></div>
 ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="emotions">${aEm}</div></div>` : ''}
 <div class="field"><span class="label">Pensées : </span><span class="value">${escapeHtml(e.after?.thoughts || '-')}</span></div>
-${(e.consequences?.positive || e.consequences?.negative) ? `<div class="sub">Conséquences</div>
-${e.consequences?.positive ? `<div class="field"><span class="label">+ </span><span class="value">${escapeHtml(e.consequences.positive)}</span></div>` : ''}
-${e.consequences?.negative ? `<div class="field"><span class="label">- </span><span class="value">${escapeHtml(e.consequences.negative)}</span></div>` : ''}` : ''}
 </div>`;
         }
 
@@ -1731,6 +1738,7 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
                 hideLoginScreen();
 
                 await migrateIfNeeded();
+                await migrateConsequences();
 
                 initChips();
                 initSpeech();
