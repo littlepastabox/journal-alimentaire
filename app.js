@@ -422,7 +422,7 @@ const App = (() => {
 
         setCraving(null);
 
-        document.querySelectorAll('.section-body').forEach(b => b.classList.add('collapsed'));
+        document.querySelectorAll('.collapsible .section-body').forEach(b => b.classList.add('collapsed'));
         document.querySelectorAll('.toggle-chevron').forEach(c => c.style.transform = '');
     }
 
@@ -540,12 +540,11 @@ const App = (() => {
         const hasAfter = entry.after?.situation || afterEmotions.length > 0 || entry.after?.thoughts;
         const hasConseq = entry.consequences?.positive || entry.consequences?.negative;
 
-        document.querySelectorAll('.section-body').forEach(b => b.classList.add('collapsed'));
+        document.querySelectorAll('.collapsible .section-body').forEach(b => b.classList.add('collapsed'));
         document.querySelectorAll('.toggle-chevron').forEach(c => c.style.transform = '');
 
-        if (hasBefore) expandSection(0);
-        if (hasAfter) expandSection(1);
-        if (hasConseq) expandSection(2);
+        if (hasAfter) expandSection(0);
+        if (hasConseq) expandSection(1);
     }
 
     function expandSection(index) {
