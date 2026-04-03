@@ -434,8 +434,6 @@ const App = (() => {
         document.querySelectorAll('#quick-emotions .chip').forEach(c => c.classList.remove('selected'));
         document.getElementById('before-intensity').innerHTML = '';
         updateEmotionHint();
-        document.getElementById('quick-notes').value = '';
-
         document.querySelectorAll('#before-situation-chips .chip').forEach(c => c.classList.remove('selected'));
         document.getElementById('before-situation').value = '';
         document.getElementById('before-thoughts').value = '';
@@ -517,9 +515,6 @@ const App = (() => {
             addIntensitySlider('before-intensity', em.name, em.intensity);
         });
         updateEmotionHint();
-
-        // Quick notes = before thoughts (prefer quick-notes, fallback to before.thoughts)
-        document.getElementById('quick-notes').value = entry.before?.thoughts || '';
 
         // Situation chips
         const sitChips = entry.situationChips || [];
@@ -607,7 +602,6 @@ const App = (() => {
 
     function collectFormData() {
         const selectedMeal = document.querySelector('#meal-chips .chip.selected');
-        const quickNotes = document.getElementById('quick-notes').value.trim();
         const beforeThoughts = document.getElementById('before-thoughts').value.trim();
 
         return {
@@ -620,7 +614,7 @@ const App = (() => {
             before: {
                 situation: document.getElementById('before-situation').value.trim(),
                 emotions: getQuickEmotions(),
-                thoughts: quickNotes || beforeThoughts
+                thoughts: beforeThoughts
             },
             after: {
                 situation: document.getElementById('after-situation').value.trim(),
