@@ -1194,8 +1194,6 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         renderEmotionChart(entries, 'after', 'chart-emotions-after');
         renderTransitions(entries);
         renderSituations(entries);
-        renderMeals(entries);
-        renderWeekdays(entries);
         renderSnackingFrequency(entries);
         renderSnackingContexts(entries);
         renderGuiltEvolution(entries);
@@ -1309,52 +1307,6 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
                 <span class="bar-label">${sitLabels[name] || name}</span>
                 <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--primary)"></div></div>
                 <span class="bar-count">${count}</span>
-            </div>`;
-        }).join('');
-    }
-
-    function renderMeals(entries) {
-        const container = document.getElementById('chart-meals');
-        const counts = {};
-        entries.forEach(e => {
-            if (e.mealType) counts[e.mealType] = (counts[e.mealType] || 0) + 1;
-        });
-
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        if (sorted.length === 0) { container.innerHTML = '<p class="trend-empty">Pas encore de données</p>'; return; }
-
-        const max = sorted[0][1];
-        container.innerHTML = sorted.map(([name, count]) => {
-            const pct = Math.round((count / max) * 100);
-            return `<div class="bar-row">
-                <span class="bar-label">${MEAL_LABELS[name] || name}</span>
-                <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--primary)"></div></div>
-                <span class="bar-count">${count}</span>
-            </div>`;
-        }).join('');
-    }
-
-    function renderWeekdays(entries) {
-        const container = document.getElementById('chart-weekdays');
-        const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-        const counts = [0, 0, 0, 0, 0, 0, 0];
-
-        entries.forEach(e => {
-            const d = new Date(e.date + 'T00:00:00').getDay();
-            counts[d]++;
-        });
-
-        // Reorder to start Monday
-        const ordered = [1, 2, 3, 4, 5, 6, 0].map(i => ({ day: days[i], count: counts[i] }));
-        const max = Math.max(...ordered.map(d => d.count), 1);
-
-        container.innerHTML = ordered.map(d => {
-            const pct = Math.round((d.count / max) * 100);
-            const opacity = 0.2 + (d.count / max) * 0.8;
-            return `<div class="weekday-col">
-                <div class="weekday-bar" style="height:${Math.max(pct, 4)}%;opacity:${opacity}"></div>
-                <span class="weekday-label">${d.day}</span>
-                <span class="weekday-count">${d.count}</span>
             </div>`;
         }).join('');
     }
