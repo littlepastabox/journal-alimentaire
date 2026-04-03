@@ -1284,29 +1284,41 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
 
     function renderSituations(entries) {
         const container = document.getElementById('chart-situations');
-        const counts = {};
         const sitLabels = { maison: 'A la maison', bureau: 'Au bureau', exterieur: 'A l\'extérieur', restaurant: 'Au restaurant', seul: 'Seul(e)', famille: 'En famille', amis: 'Entre amis', collegues: 'Avec collègues', boyfriend: 'Avec boyfriend' };
+        const negEmotions = ['tristesse', 'peur', 'colere', 'degout', 'culpabilite', 'honte', 'stress', 'frustration'];
+
+        const negCounts = {};
+        const totalCounts = {};
 
         entries.forEach(e => {
-            (e.situationChips || []).forEach(s => {
-                counts[s] = (counts[s] || 0) + 1;
+            const chips = e.situationChips || [];
+            if (chips.length === 0) return;
+
+            const allEmo = [...(e.before?.emotions || []), ...(e.after?.emotions || [])];
+            const hasNeg = allEmo.some(em => negEmotions.includes(em.name));
+
+            chips.forEach(s => {
+                totalCounts[s] = (totalCounts[s] || 0) + 1;
+                if (hasNeg) negCounts[s] = (negCounts[s] || 0) + 1;
             });
         });
 
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+        const sorted = Object.entries(negCounts).sort((a, b) => b[1] - a[1]);
 
         if (sorted.length === 0) {
-            container.innerHTML = '<p class="trend-empty">Utilisez les chips de situation pour voir les patterns</p>';
+            container.innerHTML = '<p class="trend-empty">Pas encore de données reliant contextes et émotions négatives</p>';
             return;
         }
 
         const max = sorted[0][1];
-        container.innerHTML = sorted.map(([name, count]) => {
-            const pct = Math.round((count / max) * 100);
+        container.innerHTML = sorted.map(([name, negCount]) => {
+            const total = totalCounts[name] || 0;
+            const pct = Math.round((negCount / max) * 100);
+            const ratio = total > 0 ? Math.round((negCount / total) * 100) : 0;
             return `<div class="bar-row">
                 <span class="bar-label">${sitLabels[name] || name}</span>
-                <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--primary)"></div></div>
-                <span class="bar-count">${count}</span>
+                <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#e17055"></div></div>
+                <span class="bar-count" title="${negCount}/${total} entrées">${negCount}x <small>(${ratio}%)</small></span>
             </div>`;
         }).join('');
     }
