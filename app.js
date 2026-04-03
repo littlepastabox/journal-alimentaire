@@ -440,7 +440,6 @@ const App = (() => {
 
         document.querySelectorAll('#after-emotions .chip').forEach(c => c.classList.remove('selected'));
         document.getElementById('after-intensity').innerHTML = '';
-        document.getElementById('after-situation').value = '';
         document.getElementById('after-thoughts').value = '';
 
         setCraving(null);
@@ -533,8 +532,8 @@ const App = (() => {
             if (chip) chip.classList.add('selected');
             addIntensitySlider('after-intensity', em.name, em.intensity);
         });
-        document.getElementById('after-situation').value = entry.after?.situation || '';
-        document.getElementById('after-thoughts').value = entry.after?.thoughts || '';
+        const afterParts = [entry.after?.situation, entry.after?.thoughts].filter(Boolean);
+        document.getElementById('after-thoughts').value = afterParts.join('\n');
 
 
         // Craving fields
@@ -555,7 +554,7 @@ const App = (() => {
 
         // Expand sections that have content
         const hasBefore = entry.before?.situation || sitChips.length > 0;
-        const hasAfter = entry.after?.situation || afterEmotions.length > 0 || entry.after?.thoughts;
+        const hasAfter = afterEmotions.length > 0 || entry.after?.thoughts;
 
         document.querySelectorAll('.collapsible .section-body').forEach(b => b.classList.add('collapsed'));
         document.querySelectorAll('.toggle-chevron').forEach(c => c.style.transform = '');
@@ -617,7 +616,6 @@ const App = (() => {
                 thoughts: beforeThoughts
             },
             after: {
-                situation: document.getElementById('after-situation').value.trim(),
                 emotions: getSelectedEmotions('after'),
                 thoughts: document.getElementById('after-thoughts').value.trim()
             },
@@ -716,9 +714,8 @@ const App = (() => {
             </div>
             <div class="detail-section">
                 <h3>Après le repas</h3>
-                ${field('Situation', entry.after?.situation)}
                 <div class="detail-field"><div class="detail-label">Émotions</div>${renderEmotions(entry.after?.emotions)}</div>
-                ${field('Pensées', entry.after?.thoughts)}
+                ${field('Ressenti / observations', entry.after?.thoughts)}
             </div>`;
 
         if (entry.craving === true) {
@@ -896,15 +893,14 @@ const App = (() => {
         const entries = await getExportEntries();
         if (!entries.length) { showToast('Aucune entrée à exporter'); return; }
 
-        const headers = ['Date', 'Heure', 'Type de repas', 'Comportement', 'Durée', 'Avant - Situation', 'Avant - Émotions', 'Avant - Pensées', 'Après - Situation', 'Après - Émotions', 'Après - Pensées', 'Pulsion sucrée', 'Assouvie', 'Prix pâtisserie'];
+        const headers = ['Date', 'Heure', 'Type de repas', 'Comportement', 'Durée', 'Avant - Situation', 'Avant - Émotions', 'Avant - Pensées', 'Après - Émotions', 'Après - Ressenti', 'Pulsion sucrée', 'Assouvie', 'Prix pâtisserie'];
         const rows = entries.map(e => [
             e.date, e.time || '', MEAL_LABELS[e.mealType] || '', e.behavior || '', e.duration || '',
             e.before?.situation || '',
             (e.before?.emotions || []).map(em => `${EMOTION_LABELS[em.name] || em.name} (${em.intensity}/10)`).join(', '),
             e.before?.thoughts || '',
-            e.after?.situation || '',
             (e.after?.emotions || []).map(em => `${EMOTION_LABELS[em.name] || em.name} (${em.intensity}/10)`).join(', '),
-            e.after?.thoughts || '',
+            [e.after?.situation, e.after?.thoughts].filter(Boolean).join(' | ') || '',
             e.craving ? 'Oui' : (e.craving === false ? 'Non' : ''),
             e.cravingSatisfied ? 'Oui' : (e.cravingSatisfied === false ? 'Non' : ''),
             e.pastryPrice > 0 ? e.pastryPrice.toFixed(2) : ''
@@ -949,9 +945,8 @@ const App = (() => {
 ${bEm ? `<div class="field"><span class="label">Émotions : </span><div class="emotions">${bEm}</div></div>` : ''}
 <div class="field"><span class="label">Pensées : </span><span class="value">${escapeHtml(e.before?.thoughts || '-')}</span></div>
 <div class="sub">Après</div>
-<div class="field"><span class="label">Situation : </span><span class="value">${escapeHtml(e.after?.situation || '-')}</span></div>
 ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="emotions">${aEm}</div></div>` : ''}
-<div class="field"><span class="label">Pensées : </span><span class="value">${escapeHtml(e.after?.thoughts || '-')}</span></div>
+<div class="field"><span class="label">Ressenti : </span><span class="value">${escapeHtml([e.after?.situation, e.after?.thoughts].filter(Boolean).join(' | ') || '-')}</span></div>
 </div>`;
         }
 
