@@ -1302,27 +1302,27 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
             if (hasNeg) negCounts[comboKey] = (negCounts[comboKey] || 0) + 1;
         });
 
+        const totalNeg = Object.values(negCounts).reduce((s, v) => s + v, 0);
+
         const sorted = Object.entries(negCounts)
-            .filter(([combo]) => totalCounts[combo] >= 2)
             .sort((a, b) => b[1] - a[1]);
 
-        if (sorted.length === 0) {
-            container.innerHTML = '<p class="trend-empty">Pas encore assez de données (2 occurrences minimum par contexte)</p>';
+        if (sorted.length === 0 || totalNeg === 0) {
+            container.innerHTML = '<p class="trend-empty">Pas encore de données reliant contextes et émotions négatives</p>';
             return;
         }
 
         const comboLabel = (key) => key.split('+').map(s => sitLabels[s] || s).join(', ');
 
         container.innerHTML = sorted.map(([combo, negCount]) => {
-            const total = totalCounts[combo] || 0;
-            const ratio = total > 0 ? Math.round((negCount / total) * 100) : 0;
+            const ratio = Math.round((negCount / totalNeg) * 100);
             const hue = Math.max(0, 40 - ratio * 0.4);
             const sat = 70 + ratio * 0.3;
             const pillColor = `hsl(${hue}, ${sat}%, 48%)`;
             return `<div class="ctx-row">
                 <span class="ctx-label">${comboLabel(combo)}</span>
                 <span class="ctx-stats">
-                    <span class="ctx-count">${negCount}x sur ${total}</span>
+                    <span class="ctx-count">${negCount}x</span>
                     <span class="ctx-pill" style="background:${pillColor}">${ratio}%</span>
                 </span>
             </div>`;
