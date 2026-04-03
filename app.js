@@ -1302,10 +1302,12 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
             if (hasNeg) negCounts[comboKey] = (negCounts[comboKey] || 0) + 1;
         });
 
-        const sorted = Object.entries(negCounts).sort((a, b) => b[1] - a[1]);
+        const sorted = Object.entries(negCounts)
+            .filter(([combo]) => totalCounts[combo] >= 2)
+            .sort((a, b) => b[1] - a[1]);
 
         if (sorted.length === 0) {
-            container.innerHTML = '<p class="trend-empty">Pas encore de données reliant contextes et émotions négatives</p>';
+            container.innerHTML = '<p class="trend-empty">Pas encore assez de données (2 occurrences minimum par contexte)</p>';
             return;
         }
 
