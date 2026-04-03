@@ -398,9 +398,6 @@ const App = (() => {
             c.classList.toggle('selected', c.dataset.value === detectedMeal);
         });
 
-        const cravingSection = document.getElementById('craving-section');
-        if (cravingSection) cravingSection.classList.toggle('hidden', detectedMeal !== 'grignotage');
-
         document.getElementById('entry-behavior').value = '';
         document.getElementById('entry-duration').value = '';
 
@@ -415,7 +412,11 @@ const App = (() => {
 
         document.querySelectorAll('#after-emotions .chip').forEach(c => c.classList.remove('selected'));
         document.getElementById('after-intensity').innerHTML = '';
+        document.getElementById('after-situation').value = '';
         document.getElementById('after-thoughts').value = '';
+
+        document.getElementById('consequences-positive').value = '';
+        document.getElementById('consequences-negative').value = '';
 
         setCraving(null);
 
@@ -472,9 +473,6 @@ const App = (() => {
             c.classList.toggle('selected', c.dataset.value === entry.mealType);
         });
 
-        const cravingSection = document.getElementById('craving-section');
-        if (cravingSection) cravingSection.classList.toggle('hidden', entry.mealType !== 'grignotage');
-
         document.getElementById('entry-behavior').value = entry.behavior || '';
         document.getElementById('entry-duration').value = entry.duration || '';
 
@@ -511,7 +509,11 @@ const App = (() => {
             if (chip) chip.classList.add('selected');
             addIntensitySlider('after-intensity', em.name, em.intensity);
         });
-        document.getElementById('after-thoughts').value = entry.after?.thoughts || (entry.after?.situation ? entry.after.situation + '\n' + (entry.after?.thoughts || '') : '').trim();
+        document.getElementById('after-situation').value = entry.after?.situation || '';
+        document.getElementById('after-thoughts').value = entry.after?.thoughts || '';
+
+        document.getElementById('consequences-positive').value = entry.consequences?.positive || '';
+        document.getElementById('consequences-negative').value = entry.consequences?.negative || '';
 
         // Craving fields
         if (entry.craving === true) {
@@ -597,9 +599,13 @@ const App = (() => {
                 thoughts: quickNotes || beforeThoughts
             },
             after: {
-                situation: '',
+                situation: document.getElementById('after-situation').value.trim(),
                 emotions: getSelectedEmotions('after'),
                 thoughts: document.getElementById('after-thoughts').value.trim()
+            },
+            consequences: {
+                positive: document.getElementById('consequences-positive').value.trim(),
+                negative: document.getElementById('consequences-negative').value.trim()
             },
             situationChips: getSelectedSituationChips(),
             craving: getCravingValue(),
@@ -1040,15 +1046,11 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
     // ===== CHIP EVENT HANDLERS =====
 
     function initChips() {
-        // Meal chips: single select + toggle craving section
+        // Meal chips: single select
         document.querySelectorAll('#meal-chips .chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('#meal-chips .chip').forEach(c => c.classList.remove('selected'));
                 chip.classList.add('selected');
-                const cravingSection = document.getElementById('craving-section');
-                if (cravingSection) {
-                    cravingSection.classList.toggle('hidden', chip.dataset.value !== 'grignotage');
-                }
             });
         });
 

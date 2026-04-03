@@ -144,8 +144,8 @@
                         </div>
                     </section>
 
-                    <!-- COMPACT: Pulsions sucrées (visible only for grignotage) -->
-                    <section class="form-section hidden" id="craving-section">
+                    <!-- COMPACT: Pulsions sucrées -->
+                    <section class="form-section">
                         <label class="section-label-inline">Pulsions sucrées</label>
                         <div class="toggle-row">
                             <span class="toggle-label">Envie soudaine ?</span>
@@ -174,10 +174,14 @@
                         </div>
                     </section>
 
-                    <!-- Pendant le repas -->
-                    <section class="form-section">
-                        <h3 class="section-title">Pendant le repas</h3>
-                        <div class="section-body">
+                    <!-- EXPANDABLE: Avant le repas -->
+                    <section class="form-section collapsible">
+                        <h3 class="section-title toggle-section" onclick="App.toggleSection(this)">
+                            <svg class="toggle-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            Avant le repas
+                            <span class="optional-badge">détails</span>
+                        </h3>
+                        <div class="section-body collapsed">
                             <div class="field-group">
                                 <label>Situation</label>
                                 <div class="chips compact-chips situation-chips" id="before-situation-chips">
@@ -230,7 +234,7 @@
                         </div>
                     </section>
 
-                    <!-- Après le repas -->
+                    <!-- EXPANDABLE: Après le repas -->
                     <section class="form-section collapsible">
                         <h3 class="section-title toggle-section" onclick="App.toggleSection(this)">
                             <svg class="toggle-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
@@ -238,6 +242,13 @@
                             <span class="optional-badge">détails</span>
                         </h3>
                         <div class="section-body collapsed">
+                            <div class="field-group">
+                                <label for="after-situation">Situation</label>
+                                <div>
+                                    <textarea id="after-situation" rows="2" placeholder="Qu'est-ce qui s'est passé après ?"></textarea>
+                                </div>
+                            </div>
+
                             <div class="field-group">
                                 <label>Émotions</label>
                                 <div class="chips emotion-chips compact-chips" id="after-emotions">
@@ -258,9 +269,32 @@
                             </div>
 
                             <div class="field-group">
-                                <label for="after-thoughts">Ressenti / observations</label>
+                                <label for="after-thoughts">Pensées</label>
                                 <div>
-                                    <textarea id="after-thoughts" rows="2" placeholder="Comment vous sentez-vous ? Ce qui s'est passé après..."></textarea>
+                                    <textarea id="after-thoughts" rows="2" placeholder="Ce qui me passe par la tête après..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- EXPANDABLE: Conséquences -->
+                    <section class="form-section collapsible">
+                        <h3 class="section-title toggle-section" onclick="App.toggleSection(this)">
+                            <svg class="toggle-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                            Conséquences
+                            <span class="optional-badge">optionnel</span>
+                        </h3>
+                        <div class="section-body collapsed">
+                            <div class="field-group">
+                                <label for="consequences-positive">Positives</label>
+                                <div>
+                                    <textarea id="consequences-positive" rows="2" placeholder="Conséquences positives..."></textarea>
+                                </div>
+                            </div>
+                            <div class="field-group">
+                                <label for="consequences-negative">Négatives</label>
+                                <div>
+                                    <textarea id="consequences-negative" rows="2" placeholder="Conséquences négatives..."></textarea>
                                 </div>
                             </div>
                         </div>
