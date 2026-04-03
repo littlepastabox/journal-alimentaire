@@ -1023,11 +1023,7 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         if (chevron) chevron.style.transform = isCollapsed ? '' : 'rotate(90deg)';
     }
 
-    function updateEmotionHint() {
-        const hint = document.getElementById('no-emotions-hint');
-        const sliders = document.getElementById('before-intensity');
-        if (hint) hint.style.display = sliders.children.length > 0 ? 'none' : 'block';
-    }
+    function updateEmotionHint() {}
 
     function addIntensitySlider(containerId, emotionName, value) {
         const container = document.getElementById(containerId);
