@@ -704,12 +704,12 @@ const App = (() => {
                 ${sitChips.length ? field('Contexte', sitChips.join(', ')) : ''}
                 ${field('Situation', entry.before?.situation)}
                 <div class="detail-field"><div class="detail-label">Émotions</div>${renderEmotions(entry.before?.emotions)}</div>
-                ${field('Pensées', entry.before?.thoughts)}
+                ${field('Pensées & Ressentis', entry.before?.thoughts)}
             </div>
             <div class="detail-section">
                 <h3>Après le repas</h3>
                 <div class="detail-field"><div class="detail-label">Émotions</div>${renderEmotions(entry.after?.emotions)}</div>
-                ${field('Ressenti / observations', entry.after?.thoughts)}
+                ${field('Pensées & Ressentis', entry.after?.thoughts)}
             </div>`;
 
         if (entry.craving === true) {
@@ -887,7 +887,7 @@ const App = (() => {
         const entries = await getExportEntries();
         if (!entries.length) { showToast('Aucune entrée à exporter'); return; }
 
-        const headers = ['Date', 'Heure', 'Type de repas', 'Comportement', 'Durée', 'Avant - Situation', 'Avant - Émotions', 'Avant - Pensées', 'Après - Émotions', 'Après - Ressenti', 'Pulsion sucrée', 'Assouvie', 'Prix pâtisserie'];
+        const headers = ['Date', 'Heure', 'Type de repas', 'Comportement', 'Durée', 'Avant - Situation', 'Avant - Émotions', 'Avant - Pensées & Ressentis', 'Après - Émotions', 'Après - Pensées & Ressentis', 'Pulsion sucrée', 'Assouvie', 'Prix pâtisserie'];
         const rows = entries.map(e => [
             e.date, e.time || '', MEAL_LABELS[e.mealType] || '', e.behavior || '', e.duration || '',
             e.before?.situation || '',
@@ -937,10 +937,10 @@ const App = (() => {
 <div class="sub">Avant</div>
 <div class="field"><span class="label">Situation : </span><span class="value">${escapeHtml(e.before?.situation || '-')}</span></div>
 ${bEm ? `<div class="field"><span class="label">Émotions : </span><div class="emotions">${bEm}</div></div>` : ''}
-<div class="field"><span class="label">Pensées : </span><span class="value">${escapeHtml(e.before?.thoughts || '-')}</span></div>
+<div class="field"><span class="label">Pensées & Ressentis : </span><span class="value">${escapeHtml(e.before?.thoughts || '-')}</span></div>
 <div class="sub">Après</div>
 ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="emotions">${aEm}</div></div>` : ''}
-<div class="field"><span class="label">Ressenti : </span><span class="value">${escapeHtml([e.after?.situation, e.after?.thoughts].filter(Boolean).join(' | ') || '-')}</span></div>
+<div class="field"><span class="label">Pensées & Ressentis : </span><span class="value">${escapeHtml([e.after?.situation, e.after?.thoughts].filter(Boolean).join(' | ') || '-')}</span></div>
 </div>`;
         }
 
