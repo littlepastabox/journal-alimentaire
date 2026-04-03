@@ -552,14 +552,8 @@ const App = (() => {
             setCraving(null);
         }
 
-        // Expand sections that have content
-        const hasBefore = entry.before?.situation || sitChips.length > 0;
-        const hasAfter = afterEmotions.length > 0 || entry.after?.thoughts;
-
         document.querySelectorAll('.collapsible .section-body').forEach(b => b.classList.add('collapsed'));
         document.querySelectorAll('.toggle-chevron').forEach(c => c.style.transform = '');
-
-        if (hasAfter) expandSection(0);
     }
 
     function expandSection(index) {
