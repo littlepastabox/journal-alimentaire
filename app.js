@@ -1195,7 +1195,6 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         renderTransitions(entries);
         renderSituations(entries);
         renderSnackingSummary(entries);
-        renderGuiltEvolution(entries);
         renderCravings(entries);
         renderBudget(entries);
         renderWords(entries);
@@ -1471,52 +1470,6 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         }
 
         container.innerHTML = html;
-    }
-
-    function renderGuiltEvolution(entries) {
-        const targetEmotions = ['honte', 'culpabilite'];
-        const weeks = {};
-
-        entries.forEach(e => {
-            const k = getWeekKey(e.date);
-            if (!weeks[k]) weeks[k] = { count: 0, totalIntensity: 0, occurrences: 0 };
-            weeks[k].count++;
-            (e.after?.emotions || []).forEach(em => {
-                if (targetEmotions.includes(em.name)) {
-                    weeks[k].occurrences++;
-                    weeks[k].totalIntensity += em.intensity;
-                }
-            });
-        });
-
-        const data = Object.entries(weeks)
-            .map(([week, d]) => ({
-                week,
-                value: d.occurrences,
-                avg: d.occurrences > 0 ? d.totalIntensity / d.occurrences : 0
-            }))
-            .sort((a, b) => a.week.localeCompare(b.week))
-            .slice(-12);
-
-        const container = document.getElementById('chart-guilt');
-        if (data.length === 0 || data.every(d => d.value === 0)) {
-            container.innerHTML = '<p class="trend-empty">Pas encore de données sur la honte/culpabilité après repas</p>';
-            return;
-        }
-
-        const max = Math.max(...data.map(w => w.value), 1);
-        container.innerHTML = `<div class="evo-bars">${data.map(w => {
-            const pct = Math.round((w.value / max) * 100);
-            const d = new Date(w.week + 'T00:00:00');
-            const label = `${d.getDate()}/${d.getMonth() + 1}`;
-            const intensityLabel = w.avg !== 0 ? ` (moy. ${w.avg > 0 ? '+' : ''}${w.avg.toFixed(1)})` : '';
-            return `<div class="evo-col" title="Sem. ${label}: ${w.value}x${intensityLabel}">
-                <div class="evo-bar" style="height:${Math.max(pct, 4)}%;background:var(--danger)"></div>
-                <span class="evo-val">${w.value}</span>
-                <span class="evo-label">${label}</span>
-            </div>`;
-        }).join('')}</div>
-        <p class="trend-hint" style="margin-top:8px;text-align:center">Nombre de fois par semaine</p>`;
     }
 
     function renderCravings(entries) {
