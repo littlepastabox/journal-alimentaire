@@ -1355,9 +1355,8 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         });
 
         const sorted = Object.values(groups)
-            .filter(g => g.count >= 2)
             .sort((a, b) => b.count - a.count)
-            .slice(0, 8);
+            .slice(0, 10);
 
         if (sorted.length === 0) {
             container.innerHTML = '<p class="trend-empty">Pas encore assez de données pour identifier des schémas récurrents</p>';
