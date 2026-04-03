@@ -1577,6 +1577,43 @@ textarea {
     white-space: nowrap;
 }
 
+/* Snacking summary */
+.snack-stats {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.snack-stat {
+    flex: 1;
+    text-align: center;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 12px 6px;
+}
+
+.snack-stat-val {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.snack-stat-label {
+    font-size: 11px;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.snack-question {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-light);
+    margin: 14px 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
 /* Transitions */
 .transitions-list {
     display: flex;

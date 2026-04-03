@@ -1194,8 +1194,7 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         renderEmotionChart(entries, 'after', 'chart-emotions-after');
         renderTransitions(entries);
         renderSituations(entries);
-        renderSnackingFrequency(entries);
-        renderSnackingContexts(entries);
+        renderSnackingSummary(entries);
         renderGuiltEvolution(entries);
         renderCravings(entries);
         renderBudget(entries);
@@ -1391,66 +1390,83 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         }).join('')}</div>`;
     }
 
-    function renderSnackingFrequency(entries) {
+    function renderSnackingSummary(entries) {
+        const container = document.getElementById('snacking-summary');
         const snacks = entries.filter(e => e.mealType === 'grignotage');
-        const weeks = {};
-        snacks.forEach(e => {
-            const k = getWeekKey(e.date);
-            weeks[k] = (weeks[k] || 0) + 1;
-        });
-
-        // Fill gaps
-        const allWeeks = {};
-        entries.forEach(e => { allWeeks[getWeekKey(e.date)] = true; });
-        Object.keys(allWeeks).forEach(k => { if (!weeks[k]) weeks[k] = 0; });
-
-        const data = Object.entries(weeks)
-            .map(([week, count]) => ({ week, value: count }))
-            .sort((a, b) => a.week.localeCompare(b.week))
-            .slice(-12);
-
-        renderWeeklyBars('chart-snacking-freq', data, v => v + 'x', 'var(--secondary)');
-    }
-
-    function renderSnackingContexts(entries) {
-        const container = document.getElementById('chart-snacking-contexts');
-        const snacks = entries.filter(e => e.mealType === 'grignotage');
-        const counts = {};
         const sitLabels = { maison: 'A la maison', bureau: 'Au bureau', exterieur: 'A l\'extérieur', restaurant: 'Au restaurant', seul: 'Seul(e)', famille: 'En famille', amis: 'Entre amis', collegues: 'Avec collègues', boyfriend: 'Avec boyfriend' };
 
-        snacks.forEach(e => {
-            (e.situationChips || []).forEach(s => { counts[s] = (counts[s] || 0) + 1; });
-        });
-
-        // Also analyze emotions tied to snacking
-        const emotionCounts = {};
-        snacks.forEach(e => {
-            (e.before?.emotions || []).forEach(em => { emotionCounts[em.name] = (emotionCounts[em.name] || 0) + 1; });
-        });
-
-        const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
-        const sortedEmotions = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
-
-        if (sorted.length === 0 && sortedEmotions.length === 0) {
-            container.innerHTML = '<p class="trend-empty">Utilisez les chips de situation lors des grignotages</p>';
+        if (snacks.length === 0) {
+            container.innerHTML = '<p class="trend-empty">Aucun grignotage enregistré</p>';
             return;
         }
 
-        const max = Math.max(...[...sorted.map(s => s[1]), ...sortedEmotions.map(s => s[1])], 1);
-        let html = sorted.map(([name, count]) => {
-            const pct = Math.round((count / max) * 100);
-            return `<div class="bar-row"><span class="bar-label">${sitLabels[name] || name}</span>
-                <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--primary)"></div></div>
-                <span class="bar-count">${count}</span></div>`;
-        }).join('');
+        let html = '';
 
-        if (sortedEmotions.length > 0) {
-            html += '<p class="trend-subtitle" style="margin-top:12px">Émotions avant grignotage</p>';
-            html += sortedEmotions.map(([name, count]) => {
-                const pct = Math.round((count / max) * 100);
-                return `<div class="bar-row"><span class="bar-label">${EMOTION_LABELS[name] || name}</span>
-                    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:var(--secondary)"></div></div>
-                    <span class="bar-count">${count}</span></div>`;
+        // --- Key numbers ---
+        const totalDays = new Set(entries.map(e => e.date)).size;
+        const snackDays = new Set(snacks.map(e => e.date)).size;
+        const avgPerWeek = totalDays > 0 ? (snacks.length / (totalDays / 7)).toFixed(1) : 0;
+
+        html += `<div class="snack-stats">
+            <div class="snack-stat"><span class="snack-stat-val">${snacks.length}</span><span class="snack-stat-label">grignotages</span></div>
+            <div class="snack-stat"><span class="snack-stat-val">${avgPerWeek}</span><span class="snack-stat-label">/ semaine</span></div>
+            <div class="snack-stat"><span class="snack-stat-val">${snackDays}</span><span class="snack-stat-label">jours concernés</span></div>
+        </div>`;
+
+        // --- When: time slots ---
+        const hours = {};
+        snacks.forEach(e => {
+            if (!e.time) return;
+            const h = parseInt(e.time.split(':')[0]);
+            let slot;
+            if (h < 10) slot = 'Matin (avant 10h)';
+            else if (h < 12) slot = 'Milieu de matinée';
+            else if (h < 14) slot = 'Midi';
+            else if (h < 16) slot = 'Après-midi';
+            else if (h < 19) slot = 'Fin d\'après-midi';
+            else slot = 'Soirée';
+            hours[slot] = (hours[slot] || 0) + 1;
+        });
+        const topSlots = Object.entries(hours).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        if (topSlots.length > 0) {
+            html += `<p class="snack-question">Quand ?</p>`;
+            html += topSlots.map(([slot, count]) => {
+                const pct = Math.round((count / snacks.length) * 100);
+                return `<div class="ctx-row"><span class="ctx-label">${slot}</span><span class="ctx-stats"><span class="ctx-count">${count}x</span><span class="ctx-pill" style="background:var(--secondary)">${pct}%</span></span></div>`;
+            }).join('');
+        }
+
+        // --- Where & with whom: combined chips ---
+        const comboCounts = {};
+        snacks.forEach(e => {
+            const chips = (e.situationChips || []).slice().sort();
+            if (chips.length === 0) return;
+            const key = chips.join('+');
+            comboCounts[key] = (comboCounts[key] || 0) + 1;
+        });
+        const topCombos = Object.entries(comboCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+        if (topCombos.length > 0) {
+            html += `<p class="snack-question">Dans quel contexte ?</p>`;
+            html += topCombos.map(([combo, count]) => {
+                const label = combo.split('+').map(s => sitLabels[s] || s).join(', ');
+                const pct = Math.round((count / snacks.length) * 100);
+                return `<div class="ctx-row"><span class="ctx-label">${label}</span><span class="ctx-stats"><span class="ctx-count">${count}x</span><span class="ctx-pill" style="background:var(--secondary)">${pct}%</span></span></div>`;
+            }).join('');
+        }
+
+        // --- What emotion triggers it ---
+        const emotionCounts = {};
+        snacks.forEach(e => {
+            (e.before?.emotions || []).forEach(em => {
+                emotionCounts[em.name] = (emotionCounts[em.name] || 0) + 1;
+            });
+        });
+        const topEmotions = Object.entries(emotionCounts).sort((a, b) => b[1] - a[1]).slice(0, 4);
+        if (topEmotions.length > 0) {
+            html += `<p class="snack-question">Quelle émotion avant ?</p>`;
+            html += topEmotions.map(([name, count]) => {
+                const pct = Math.round((count / snacks.length) * 100);
+                return `<div class="ctx-row"><span class="ctx-label">${EMOTION_LABELS[name] || name}</span><span class="ctx-stats"><span class="ctx-count">${count}x</span><span class="ctx-pill" style="background:var(--secondary)">${pct}%</span></span></div>`;
             }).join('');
         }
 
