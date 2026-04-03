@@ -386,22 +386,13 @@
                     <button class="period-btn" data-period="all" onclick="App.setPeriod('all')">Tout</button>
                 </div>
 
-                <!-- Summary -->
-                <div class="trend-card">
-                    <div class="summary-grid">
-                        <div class="summary-item">
-                            <span class="summary-number" id="trend-total">0</span>
-                            <span class="summary-label">entrées</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-number" id="trend-days">0</span>
-                            <span class="summary-label">jours actifs</span>
-                        </div>
-                        <div class="summary-item">
-                            <span class="summary-number" id="trend-avg">0</span>
-                            <span class="summary-label">entrées/jour</span>
-                        </div>
-                    </div>
+                <!-- Insights -->
+                <div class="trend-card insight-card" id="insights-card">
+                    <h3 class="trend-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        Insights
+                    </h3>
+                    <div id="insights-list" class="insights-list"></div>
                 </div>
 
                 <!-- Top emotions before -->
@@ -474,14 +465,6 @@
                     <div id="chart-budget" class="budget-grid"></div>
                 </div>
 
-                <!-- Insights -->
-                <div class="trend-card insight-card" id="insights-card">
-                    <h3 class="trend-title">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
-                        Observations
-                    </h3>
-                    <div id="insights-list" class="insights-list"></div>
-                </div>
             </div>
         </div>
 

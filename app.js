@@ -1189,7 +1189,6 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
 
         entries.sort((a, b) => a.date.localeCompare(b.date));
 
-        renderSummary(entries);
         renderEmotionChart(entries, 'before', 'chart-emotions-before');
         renderEmotionChart(entries, 'after', 'chart-emotions-after');
         renderTransitions(entries);
@@ -1201,13 +1200,6 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         renderInsights(entries);
     }
 
-    function renderSummary(entries) {
-        const days = new Set(entries.map(e => e.date));
-        document.getElementById('trend-total').textContent = entries.length;
-        document.getElementById('trend-days').textContent = days.size;
-        document.getElementById('trend-avg').textContent = days.size > 0
-            ? (entries.length / days.size).toFixed(1) : '0';
-    }
 
     function countEmotions(entries, phase) {
         const counts = {};
