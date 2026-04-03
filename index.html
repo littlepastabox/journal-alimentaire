@@ -37,12 +37,21 @@
             <header class="screen-header home-header">
                 <div>
                     <h1>Mon Journal</h1>
-                    <p class="subtitle" id="today-date"></p>
                 </div>
                 <button class="btn-header-icon" onclick="App.logout()" id="btn-logout" title="Déconnexion">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                 </button>
             </header>
+
+            <div class="date-nav">
+                <button class="date-nav-arrow" onclick="App.prevDay()" aria-label="Jour précédent">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button class="date-nav-label" id="date-nav-label" onclick="App.goToToday()"></button>
+                <button class="date-nav-arrow" onclick="App.nextDay()" aria-label="Jour suivant">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+            </div>
 
             <div class="screen-content">
                 <div id="quote-card" class="card quote-card">
@@ -77,7 +86,7 @@
                                 <line x1="16" y1="17" x2="8" y2="17"></line>
                             </svg>
                         </div>
-                        <p>Aucune entrée aujourd'hui</p>
+                        <p>Aucune entrée ce jour</p>
                         <p class="empty-hint">Appuyez sur + pour ajouter une observation</p>
                     </div>
                 </div>

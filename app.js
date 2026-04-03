@@ -23,6 +23,7 @@ const App = (() => {
     let currentScreen = 'home';
     let screenHistory = [];
     let editingEntryId = null;
+    let selectedDate = null;
     let calendarDate = new Date();
     let selectedCalDate = null;
     let recognition = null;
@@ -255,11 +256,66 @@ const App = (() => {
         return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
 
-    async function loadTodayEntries() {
+    function getRelativeDateLabel(dateStr) {
         const today = getToday();
-        document.getElementById('today-date').textContent = formatDateFr(today);
+        const d = new Date(dateStr + 'T00:00:00');
+        const t = new Date(today + 'T00:00:00');
+        const diff = Math.round((d - t) / 86400000);
+        if (diff === 0) return "Aujourd'hui";
+        if (diff === -1) return 'Hier';
+        if (diff === 1) return 'Demain';
+        if (diff === -2) return 'Avant-hier';
+        if (diff === 2) return 'Après-demain';
+        return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
 
-        const entries = await dbGetByDate(today);
+    function updateDateNav() {
+        const date = selectedDate || getToday();
+        const label = document.getElementById('date-nav-label');
+        const relative = getRelativeDateLabel(date);
+        const today = getToday();
+        const isToday = date === today;
+
+        if (isToday) {
+            label.innerHTML = `<span class="date-nav-relative">${relative}</span>`;
+        } else {
+            const d = new Date(date + 'T00:00:00');
+            const fullDate = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+            const isFriendly = ['Hier', 'Demain', 'Avant-hier', 'Après-demain'].includes(relative);
+            if (isFriendly) {
+                label.innerHTML = `<span class="date-nav-relative">${relative}</span><span class="date-nav-full">${fullDate}</span>`;
+            } else {
+                label.innerHTML = `<span class="date-nav-relative">${fullDate}</span>`;
+            }
+        }
+    }
+
+    function prevDay() {
+        const date = selectedDate || getToday();
+        const d = new Date(date + 'T00:00:00');
+        d.setDate(d.getDate() - 1);
+        selectedDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        loadDayEntries();
+    }
+
+    function nextDay() {
+        const date = selectedDate || getToday();
+        const d = new Date(date + 'T00:00:00');
+        d.setDate(d.getDate() + 1);
+        selectedDate = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        loadDayEntries();
+    }
+
+    function goToToday() {
+        selectedDate = getToday();
+        loadDayEntries();
+    }
+
+    async function loadDayEntries() {
+        const date = selectedDate || getToday();
+        updateDateNav();
+
+        const entries = await dbGetByDate(date);
         const container = document.getElementById('today-entries');
         document.getElementById('today-count').textContent = entries.length;
 
@@ -269,13 +325,18 @@ const App = (() => {
                     <div class="empty-icon">
                         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                     </div>
-                    <p>Aucune entrée aujourd'hui</p>
+                    <p>Aucune entrée ce jour</p>
                     <p class="empty-hint">Appuyez sur + pour ajouter une observation</p>
                 </div>`;
             return;
         }
 
         container.innerHTML = entries.map(e => renderEntryCard(e)).join('');
+    }
+
+    async function loadTodayEntries() {
+        if (!selectedDate) selectedDate = getToday();
+        await loadDayEntries();
     }
 
     function renderEntryCard(entry) {
@@ -339,7 +400,7 @@ const App = (() => {
             const now = new Date();
             await dbAdd({
                 id: generateId(),
-                date: getToday(),
+                date: selectedDate || getToday(),
                 time: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
                 mealType,
                 behavior: 'Repas normal, rien à signaler',
@@ -381,7 +442,7 @@ const App = (() => {
         const newEntry = {
             ...JSON.parse(JSON.stringify(src)),
             id: generateId(),
-            date: getToday(),
+            date: selectedDate || getToday(),
             time: String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0'),
             mealType: autoDetectMeal(),
             createdAt: new Date().toISOString(),
@@ -417,7 +478,7 @@ const App = (() => {
 
     function resetForm() {
         const now = new Date();
-        document.getElementById('entry-date').value = getToday();
+        document.getElementById('entry-date').value = selectedDate || getToday();
         document.getElementById('entry-time').value =
             String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
@@ -646,6 +707,7 @@ const App = (() => {
 
         await dbAdd(data);
         showToast(editingEntryId ? 'Entrée modifiée' : 'Entrée enregistrée');
+        selectedDate = data.date;
         editingEntryId = null;
         goBack();
     }
@@ -1744,6 +1806,7 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         exportJSON, exportCSV, exportPrint, importJSON, handleImport,
         toggleSection, quickNormalEntry, duplicateLastEntry, duplicateEntry,
         setPeriod, setCraving, setCravingSatisfied,
+        prevDay, nextDay, goToToday,
         loginWithGoogle, logout
     };
 })();

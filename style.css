@@ -165,6 +165,67 @@ body {
     align-items: flex-start;
 }
 
+/* ===== DATE NAVIGATOR ===== */
+.date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 20px 12px;
+    background: var(--bg);
+    position: sticky;
+    top: 0;
+    z-index: 9;
+}
+
+.date-nav-arrow {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+}
+
+.date-nav-arrow:active {
+    background: var(--bg-card-hover);
+}
+
+.date-nav-label {
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 6px 16px;
+    border-radius: 12px;
+    transition: background 0.15s;
+    min-width: 160px;
+}
+
+.date-nav-label:active {
+    background: var(--bg-card-hover);
+}
+
+.date-nav-relative {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.3px;
+}
+
+.date-nav-full {
+    font-size: 12px;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
 /* ===== SCREENS ===== */
 .screen {
     display: none;
