@@ -1324,39 +1324,58 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         const negEmotions = ['tristesse', 'peur', 'colere', 'degout', 'culpabilite', 'honte', 'stress', 'frustration'];
         const sitLabels = { maison: 'A la maison', bureau: 'Au bureau', exterieur: 'A l\'extérieur', restaurant: 'Au restaurant', seul: 'Seul(e)', famille: 'En famille', amis: 'Entre amis', collegues: 'Avec collègues', boyfriend: 'Avec boyfriend' };
 
-        const negEntries = entries.filter(e => {
-            const allEmo = [...(e.before?.emotions || []), ...(e.after?.emotions || [])];
-            return allEmo.some(em => negEmotions.includes(em.name));
-        });
+        const groups = {};
 
-        const thoughts = [];
-        negEntries.forEach(e => {
-            const texts = [e.before?.thoughts, e.after?.thoughts].filter(Boolean);
-            if (texts.length === 0) return;
-            const emotions = [...(e.before?.emotions || []), ...(e.after?.emotions || [])]
-                .filter(em => negEmotions.includes(em.name))
-                .map(em => EMOTION_LABELS[em.name] || em.name);
-            const context = (e.situationChips || []).map(s => sitLabels[s] || s).join(', ');
+        entries.forEach(e => {
+            const allEmo = [...(e.before?.emotions || []), ...(e.after?.emotions || [])];
+            const negEmo = allEmo.filter(em => negEmotions.includes(em.name));
+            if (negEmo.length === 0) return;
+
+            const emotions = [...new Set(negEmo.map(em => em.name))].sort();
+            const context = (e.situationChips || []).slice().sort();
+
+            const key = emotions.join('+') + '|' + context.join('+');
+
+            if (!groups[key]) {
+                groups[key] = {
+                    emotions: emotions.map(n => EMOTION_LABELS[n] || n),
+                    context: context.map(s => sitLabels[s] || s).join(', '),
+                    count: 0,
+                    thoughts: []
+                };
+            }
+            groups[key].count++;
+
+            const texts = [e.before?.thoughts, e.after?.thoughts].filter(Boolean).filter(t => t.trim().length > 5);
             texts.forEach(t => {
-                if (t.trim().length > 5) {
-                    thoughts.push({ text: t.trim(), emotions: [...new Set(emotions)], context, date: e.date });
+                if (!groups[key].thoughts.includes(t.trim())) {
+                    groups[key].thoughts.push(t.trim());
                 }
             });
         });
 
-        if (thoughts.length === 0) {
-            container.innerHTML = '<p class="trend-empty">Ajoutez des pensées à vos entrées pour identifier des schémas récurrents</p>';
+        const sorted = Object.values(groups)
+            .filter(g => g.count >= 2)
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 8);
+
+        if (sorted.length === 0) {
+            container.innerHTML = '<p class="trend-empty">Pas encore assez de données pour identifier des schémas récurrents</p>';
             return;
         }
 
-        const recent = thoughts.slice(-15).reverse();
-
-        container.innerHTML = recent.map(t => {
-            const emotionTags = t.emotions.map(e => `<span class="thought-emo">${e}</span>`).join('');
-            const ctx = t.context ? `<span class="thought-ctx">${t.context}</span>` : '';
-            return `<div class="thought-row">
-                <div class="thought-text">&laquo; ${t.text} &raquo;</div>
-                <div class="thought-meta">${emotionTags}${ctx}</div>
+        container.innerHTML = sorted.map(g => {
+            const emotionTags = g.emotions.map(e => `<span class="thought-emo">${e}</span>`).join('');
+            const ctx = g.context ? `<span class="thought-ctx">${g.context}</span>` : '';
+            const quotes = g.thoughts.slice(0, 3).map(t =>
+                `<div class="thought-quote">&laquo; ${t} &raquo;</div>`
+            ).join('');
+            return `<div class="thought-group">
+                <div class="thought-group-header">
+                    <div class="thought-meta">${emotionTags}${ctx}</div>
+                    <span class="thought-group-count">${g.count}x</span>
+                </div>
+                ${quotes || '<div class="thought-quote empty">Pas de notes pour ce pattern</div>'}
             </div>`;
         }).join('');
     }

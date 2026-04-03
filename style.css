@@ -1615,19 +1615,26 @@ textarea {
 }
 
 /* Thought patterns */
-.thought-row {
-    padding: 10px 0;
+.thought-group {
+    padding: 12px 0;
     border-bottom: 1px solid var(--border);
 }
 
-.thought-row:last-child { border-bottom: none; }
+.thought-group:last-child { border-bottom: none; }
 
-.thought-text {
+.thought-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    gap: 8px;
+}
+
+.thought-group-count {
     font-size: 14px;
-    color: var(--text);
-    font-style: italic;
-    line-height: 1.4;
-    margin-bottom: 6px;
+    font-weight: 700;
+    color: var(--text-light);
+    flex-shrink: 0;
 }
 
 .thought-meta {
@@ -1651,6 +1658,21 @@ textarea {
     background: var(--bg);
     padding: 2px 8px;
     border-radius: 8px;
+}
+
+.thought-quote {
+    font-size: 13px;
+    color: var(--text);
+    font-style: italic;
+    line-height: 1.4;
+    padding: 4px 0 4px 12px;
+    border-left: 2px solid var(--border);
+    margin-bottom: 4px;
+}
+
+.thought-quote.empty {
+    color: var(--text-lighter);
+    font-style: normal;
 }
 
 /* Transitions */
