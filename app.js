@@ -1321,37 +1321,43 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
 
     function renderWords(entries) {
         const container = document.getElementById('chart-words');
-        const wordCounts = {};
+        const negEmotions = ['tristesse', 'peur', 'colere', 'degout', 'culpabilite', 'honte', 'stress', 'frustration'];
+        const sitLabels = { maison: 'A la maison', bureau: 'Au bureau', exterieur: 'A l\'extérieur', restaurant: 'Au restaurant', seul: 'Seul(e)', famille: 'En famille', amis: 'Entre amis', collegues: 'Avec collègues', boyfriend: 'Avec boyfriend' };
 
-        entries.forEach(e => {
-            const texts = [
-                e.before?.thoughts || '',
-                e.after?.thoughts || '',
-                e.behavior || ''
-            ].join(' ');
-
-            texts.toLowerCase()
-                .replace(/[^a-zàâäéèêëïîôùûüÿç\s'-]/g, '')
-                .split(/\s+/)
-                .filter(w => w.length > 2 && !STOP_WORDS.has(w))
-                .forEach(w => { wordCounts[w] = (wordCounts[w] || 0) + 1; });
+        const negEntries = entries.filter(e => {
+            const allEmo = [...(e.before?.emotions || []), ...(e.after?.emotions || [])];
+            return allEmo.some(em => negEmotions.includes(em.name));
         });
 
-        const sorted = Object.entries(wordCounts)
-            .filter(([, c]) => c >= 2)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 15);
+        const thoughts = [];
+        negEntries.forEach(e => {
+            const texts = [e.before?.thoughts, e.after?.thoughts].filter(Boolean);
+            if (texts.length === 0) return;
+            const emotions = [...(e.before?.emotions || []), ...(e.after?.emotions || [])]
+                .filter(em => negEmotions.includes(em.name))
+                .map(em => EMOTION_LABELS[em.name] || em.name);
+            const context = (e.situationChips || []).map(s => sitLabels[s] || s).join(', ');
+            texts.forEach(t => {
+                if (t.trim().length > 5) {
+                    thoughts.push({ text: t.trim(), emotions: [...new Set(emotions)], context, date: e.date });
+                }
+            });
+        });
 
-        if (sorted.length === 0) {
-            container.innerHTML = '<p class="trend-empty">Ajoutez des notes et pensées pour voir les thèmes récurrents</p>';
+        if (thoughts.length === 0) {
+            container.innerHTML = '<p class="trend-empty">Ajoutez des pensées à vos entrées pour identifier des schémas récurrents</p>';
             return;
         }
 
-        const max = sorted[0][1];
-        container.innerHTML = sorted.map(([word, count]) => {
-            const size = 0.75 + (count / max) * 0.7;
-            const opacity = 0.4 + (count / max) * 0.6;
-            return `<span class="word-tag" style="font-size:${size}rem;opacity:${opacity}">${word} <sup>${count}</sup></span>`;
+        const recent = thoughts.slice(-15).reverse();
+
+        container.innerHTML = recent.map(t => {
+            const emotionTags = t.emotions.map(e => `<span class="thought-emo">${e}</span>`).join('');
+            const ctx = t.context ? `<span class="thought-ctx">${t.context}</span>` : '';
+            return `<div class="thought-row">
+                <div class="thought-text">&laquo; ${t.text} &raquo;</div>
+                <div class="thought-meta">${emotionTags}${ctx}</div>
+            </div>`;
         }).join('');
     }
 
