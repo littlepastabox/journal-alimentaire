@@ -1311,15 +1311,18 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
 
         const comboLabel = (key) => key.split('+').map(s => sitLabels[s] || s).join(', ');
 
-        const max = sorted[0][1];
         container.innerHTML = sorted.map(([combo, negCount]) => {
             const total = totalCounts[combo] || 0;
-            const pct = Math.round((negCount / max) * 100);
             const ratio = total > 0 ? Math.round((negCount / total) * 100) : 0;
-            return `<div class="bar-row">
-                <span class="bar-label">${comboLabel(combo)}</span>
-                <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#e17055"></div></div>
-                <span class="bar-count" title="${negCount}/${total} entrées">${negCount}x <small>(${ratio}%)</small></span>
+            const hue = Math.max(0, 40 - ratio * 0.4);
+            const sat = 70 + ratio * 0.3;
+            const pillColor = `hsl(${hue}, ${sat}%, 48%)`;
+            return `<div class="ctx-row">
+                <span class="ctx-label">${comboLabel(combo)}</span>
+                <span class="ctx-stats">
+                    <span class="ctx-count">${negCount}x sur ${total}</span>
+                    <span class="ctx-pill" style="background:${pillColor}">${ratio}%</span>
+                </span>
             </div>`;
         }).join('');
     }

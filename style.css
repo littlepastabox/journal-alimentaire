@@ -1533,6 +1533,50 @@ textarea {
     text-align: center;
 }
 
+/* Context rows */
+.ctx-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+}
+
+.ctx-row:last-child { border-bottom: none; }
+
+.ctx-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    flex: 1;
+    min-width: 0;
+}
+
+.ctx-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.ctx-count {
+    font-size: 12px;
+    color: var(--text-lighter);
+    white-space: nowrap;
+}
+
+.ctx-pill {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    padding: 2px 8px;
+    border-radius: 10px;
+    min-width: 40px;
+    text-align: center;
+    white-space: nowrap;
+}
+
 /* Transitions */
 .transitions-list {
     display: flex;
