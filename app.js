@@ -1291,16 +1291,15 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
         const totalCounts = {};
 
         entries.forEach(e => {
-            const chips = e.situationChips || [];
+            const chips = (e.situationChips || []).slice().sort();
             if (chips.length === 0) return;
 
+            const comboKey = chips.join('+');
             const allEmo = [...(e.before?.emotions || []), ...(e.after?.emotions || [])];
             const hasNeg = allEmo.some(em => negEmotions.includes(em.name));
 
-            chips.forEach(s => {
-                totalCounts[s] = (totalCounts[s] || 0) + 1;
-                if (hasNeg) negCounts[s] = (negCounts[s] || 0) + 1;
-            });
+            totalCounts[comboKey] = (totalCounts[comboKey] || 0) + 1;
+            if (hasNeg) negCounts[comboKey] = (negCounts[comboKey] || 0) + 1;
         });
 
         const sorted = Object.entries(negCounts).sort((a, b) => b[1] - a[1]);
@@ -1310,13 +1309,15 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
             return;
         }
 
+        const comboLabel = (key) => key.split('+').map(s => sitLabels[s] || s).join(', ');
+
         const max = sorted[0][1];
-        container.innerHTML = sorted.map(([name, negCount]) => {
-            const total = totalCounts[name] || 0;
+        container.innerHTML = sorted.map(([combo, negCount]) => {
+            const total = totalCounts[combo] || 0;
             const pct = Math.round((negCount / max) * 100);
             const ratio = total > 0 ? Math.round((negCount / total) * 100) : 0;
             return `<div class="bar-row">
-                <span class="bar-label">${sitLabels[name] || name}</span>
+                <span class="bar-label">${comboLabel(combo)}</span>
                 <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#e17055"></div></div>
                 <span class="bar-count" title="${negCount}/${total} entrées">${negCount}x <small>(${ratio}%)</small></span>
             </div>`;
