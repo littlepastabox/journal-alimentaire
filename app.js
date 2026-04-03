@@ -797,6 +797,9 @@ const App = (() => {
     // ===== CALENDAR / HISTORY =====
 
     async function renderCalendar() {
+        const today = getToday();
+        if (!selectedCalDate) selectedCalDate = today;
+
         const year = calendarDate.getFullYear();
         const month = calendarDate.getMonth();
         const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
@@ -806,7 +809,6 @@ const App = (() => {
         const firstDay = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         const startDay = firstDay === 0 ? 6 : firstDay - 1;
-        const today = getToday();
 
         let html = ['L', 'M', 'M', 'J', 'V', 'S', 'D'].map(d => `<div class="cal-header">${d}</div>`).join('');
         for (let i = 0; i < startDay; i++) html += '<div class="cal-day empty"></div>';
@@ -821,6 +823,13 @@ const App = (() => {
         }
 
         document.getElementById('calendar-grid').innerHTML = html;
+
+        document.getElementById('selected-date-label').textContent = formatDateFr(selectedCalDate);
+        const entries = await dbGetByDate(selectedCalDate);
+        const container = document.getElementById('history-entries');
+        container.innerHTML = entries.length === 0
+            ? '<div class="empty-state"><p>Aucune entrée ce jour</p></div>'
+            : entries.map(e => renderEntryCard(e)).join('');
     }
 
     function prevMonth() { calendarDate.setMonth(calendarDate.getMonth() - 1); renderCalendar(); }
