@@ -688,7 +688,7 @@ const App = (() => {
         function renderEmotions(emotions) {
             if (!emotions?.length) return '<span class="detail-value empty">Non renseigné</span>';
             return `<div class="detail-emotions-list">${emotions.map(e =>
-                `<span class="detail-emotion">${EMOTION_LABELS[e.name] || e.name} <span class="intensity">${e.intensity}/10</span></span>`
+                `<span class="detail-emotion">${EMOTION_LABELS[e.name] || e.name} <span class="intensity">${e.intensity > 0 ? '+' : ''}${e.intensity}</span></span>`
             ).join('')}</div>`;
         }
 
@@ -897,9 +897,9 @@ const App = (() => {
         const rows = entries.map(e => [
             e.date, e.time || '', MEAL_LABELS[e.mealType] || '', e.behavior || '', e.duration || '',
             e.before?.situation || '',
-            (e.before?.emotions || []).map(em => `${EMOTION_LABELS[em.name] || em.name} (${em.intensity}/10)`).join(', '),
+            (e.before?.emotions || []).map(em => `${EMOTION_LABELS[em.name] || em.name} (${em.intensity > 0 ? '+' : ''}${em.intensity})`).join(', '),
             e.before?.thoughts || '',
-            (e.after?.emotions || []).map(em => `${EMOTION_LABELS[em.name] || em.name} (${em.intensity}/10)`).join(', '),
+            (e.after?.emotions || []).map(em => `${EMOTION_LABELS[em.name] || em.name} (${em.intensity > 0 ? '+' : ''}${em.intensity})`).join(', '),
             [e.after?.situation, e.after?.thoughts].filter(Boolean).join(' | ') || '',
             e.craving ? 'Oui' : (e.craving === false ? 'Non' : ''),
             e.cravingSatisfied ? 'Oui' : (e.cravingSatisfied === false ? 'Non' : ''),
@@ -934,8 +934,8 @@ const App = (() => {
 
         for (const e of entries) {
             const meal = MEAL_LABELS[e.mealType] || '';
-            const bEm = (e.before?.emotions || []).map(em => `<span class="emotion">${EMOTION_LABELS[em.name] || em.name} ${em.intensity}/10</span>`).join('');
-            const aEm = (e.after?.emotions || []).map(em => `<span class="emotion">${EMOTION_LABELS[em.name] || em.name} ${em.intensity}/10</span>`).join('');
+            const bEm = (e.before?.emotions || []).map(em => `<span class="emotion">${EMOTION_LABELS[em.name] || em.name} ${em.intensity > 0 ? '+' : ''}${em.intensity}</span>`).join('');
+            const aEm = (e.after?.emotions || []).map(em => `<span class="emotion">${EMOTION_LABELS[em.name] || em.name} ${em.intensity > 0 ? '+' : ''}${em.intensity}</span>`).join('');
 
             html += `<div class="entry"><h3>${formatDateFr(e.date)} à ${e.time || '--:--'} ${meal ? '— ' + meal : ''}</h3>
 <div class="field"><span class="label">Comportement : </span><span class="value">${escapeHtml(e.behavior || '-')}</span></div>
@@ -1025,16 +1025,18 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
 
     function updateEmotionHint() {}
 
+    function formatIntensity(v) { return v > 0 ? '+' + v : '' + v; }
+
     function addIntensitySlider(containerId, emotionName, value) {
         const container = document.getElementById(containerId);
         const label = EMOTION_LABELS[emotionName] || emotionName;
-        const val = value !== undefined ? value : 5;
+        const val = value !== undefined ? value : 0;
         container.insertAdjacentHTML('beforeend', `
             <div class="intensity-item" data-emotion="${emotionName}">
                 <span class="intensity-label">${label}</span>
-                <input type="range" class="intensity-slider" min="0" max="10" value="${val}"
-                       oninput="this.nextElementSibling.textContent = this.value">
-                <span class="intensity-value">${val}</span>
+                <input type="range" class="intensity-slider" min="-5" max="5" value="${val}"
+                       oninput="this.nextElementSibling.textContent = (this.value > 0 ? '+' : '') + this.value">
+                <span class="intensity-value">${formatIntensity(val)}</span>
             </div>`);
     }
 
@@ -1059,7 +1061,7 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
                 const sliderContainer = document.getElementById('before-intensity');
 
                 if (isSelected) {
-                    addIntensitySlider('before-intensity', emotion, 5);
+                    addIntensitySlider('before-intensity', emotion, 0);
                 } else {
                     const slider = sliderContainer.querySelector(`[data-emotion="${emotion}"]`);
                     if (slider) slider.remove();
@@ -1086,7 +1088,7 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
                 const emotion = chip.dataset.emotion;
                 const isSelected = chip.classList.toggle('selected');
                 if (isSelected) {
-                    addIntensitySlider(`${prefix}-intensity`, emotion, 5);
+                    addIntensitySlider(`${prefix}-intensity`, emotion, 0);
                 } else {
                     const slider = sliderContainer.querySelector(`[data-emotion="${emotion}"]`);
                     if (slider) slider.remove();
@@ -1456,7 +1458,7 @@ ${aEm ? `<div class="field"><span class="label">Émotions : </span><div class="e
             const pct = Math.round((w.value / max) * 100);
             const d = new Date(w.week + 'T00:00:00');
             const label = `${d.getDate()}/${d.getMonth() + 1}`;
-            const intensityLabel = w.avg > 0 ? ` (moy. ${w.avg.toFixed(1)}/10)` : '';
+            const intensityLabel = w.avg !== 0 ? ` (moy. ${w.avg > 0 ? '+' : ''}${w.avg.toFixed(1)})` : '';
             return `<div class="evo-col" title="Sem. ${label}: ${w.value}x${intensityLabel}">
                 <div class="evo-bar" style="height:${Math.max(pct, 4)}%;background:var(--danger)"></div>
                 <span class="evo-val">${w.value}</span>
