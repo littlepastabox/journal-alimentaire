@@ -397,6 +397,8 @@ const App = (() => {
         document.querySelectorAll('#meal-chips .chip').forEach(c => {
             c.classList.toggle('selected', c.dataset.value === detectedMeal);
         });
+        const cs = document.getElementById('craving-section');
+        if (cs) cs.classList.toggle('hidden', detectedMeal !== 'grignotage');
 
         document.getElementById('entry-behavior').value = '';
         document.getElementById('entry-duration').value = '';
@@ -472,6 +474,8 @@ const App = (() => {
         document.querySelectorAll('#meal-chips .chip').forEach(c => {
             c.classList.toggle('selected', c.dataset.value === entry.mealType);
         });
+        const cs2 = document.getElementById('craving-section');
+        if (cs2) cs2.classList.toggle('hidden', entry.mealType !== 'grignotage');
 
         document.getElementById('entry-behavior').value = entry.behavior || '';
         document.getElementById('entry-duration').value = entry.duration || '';
@@ -1046,11 +1050,13 @@ ${e.consequences?.negative ? `<div class="field"><span class="label">- </span><s
     // ===== CHIP EVENT HANDLERS =====
 
     function initChips() {
-        // Meal chips: single select
+        // Meal chips: single select + toggle craving section
         document.querySelectorAll('#meal-chips .chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 document.querySelectorAll('#meal-chips .chip').forEach(c => c.classList.remove('selected'));
                 chip.classList.add('selected');
+                const cs = document.getElementById('craving-section');
+                if (cs) cs.classList.toggle('hidden', chip.dataset.value !== 'grignotage');
             });
         });
 
